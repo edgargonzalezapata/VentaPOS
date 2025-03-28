@@ -1,0 +1,208 @@
+@model IEnumerable<VentaPOS.Models.Planes>
+
+@{
+    ViewData["Title"] = "Planes Disponibles";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="container">
+        <!-- Encabezado -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-2">
+                            <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>
+                            Planes Disponibles
+                        </h1>
+                        <p class="text-muted mb-0">Selecciona el plan que mejor se adapte a tus necesidades</p>
+                    </div>
+                    <a href="@Url.Action("Bienvenida")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="text-center mb-5">
+                        <h2>Seleccione su Plan</h2>
+                        <p class="lead">Elija el plan que mejor se adapte a sus necesidades</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center g-4">
+                @foreach (var plan in Model)
+                {
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header text-center bg-primary text-white">
+                                <h4 class="my-0 fw-normal">@plan.Nombre</h4>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h1 class="card-title text-center">
+                                    $@plan.Precio.Value.ToString("N0")
+                                    <small class="text-muted fw-light">/mes</small>
+                                </h1>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li class="mb-2">
+                                        <i class="bi bi-people-fill text-primary"></i>
+                                        Hasta @plan.MaxUsuarios usuarios
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        Acceso a todas las funciones
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-headset text-primary"></i>
+                                        Soporte técnico
+                                    </li>
+                                </ul>
+                                <button class="btn btn-lg btn-primary mt-auto w-100" 
+                                        onclick="seleccionarPlan(@plan.PlanID, @plan.Precio)">
+                                    Suscribirse
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                            Facturación
+                        </h5>
+                        <p class="text-muted mb-0">Los planes se facturan mensualmente y se renuevan de forma automática.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="bi bi-shield-check text-primary me-2"></i>
+                            Garantía
+                        </h5>
+                        <p class="text-muted mb-0">Todos nuestros planes incluyen soporte técnico y actualizaciones sin costo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="bi bi-question-circle-fill text-primary me-2"></i>
+                            ¿Necesitas ayuda?
+                        </h5>
+                        <p class="text-muted mb-0">Contáctanos para recibir asesoría sobre el plan más adecuado para tu negocio.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmarPlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Suscripción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea suscribirse a este plan?</p>
+                <p>El monto a pagar es: $<span id="montoAPagar"></span></p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Será redirigido a la página de pago para completar la transacción.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarSuscripcion()">Continuar al Pago</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Procesando -->
+<div class="modal fade" id="procesandoModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Procesando...</span>
+                </div>
+                <h5>Procesando su solicitud</h5>
+                <p class="mb-0">Por favor espere...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let planSeleccionadoId = null;
+
+        function seleccionarPlan(planId, precio) {
+            planSeleccionadoId = planId;
+            $('#montoAPagar').text(precio.toLocaleString());
+            $('#confirmarPlanModal').modal('show');
+        }
+
+        function confirmarSuscripcion() {
+            if (!planSeleccionadoId) {
+                alert('Por favor, seleccione un plan.');
+                return;
+            }
+
+            $('#confirmarPlanModal').modal('hide');
+            $('#procesandoModal').modal('show');
+
+            $.ajax({
+                url: '@Url.Action("SuscribirPlan", "Usuarios")',
+                type: 'POST',
+                data: {
+                    planId: planSeleccionadoId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success && response.urlPago) {
+                        window.location.href = response.urlPago;
+                    } else {
+                        $('#procesandoModal').modal('hide');
+                        alert(response.message || 'Error al procesar la solicitud.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#procesandoModal').modal('hide');
+                    console.error('Error:', xhr.responseText);
+                    alert('Error al procesar la solicitud. Por favor, intente nuevamente.');
+                }
+            });
+        }
+    </script>
+} 

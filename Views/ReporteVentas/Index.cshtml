@@ -1,0 +1,331 @@
+@model List<ReporteVentaVM>
+@{
+    Layout = "_PanelLayout";
+}
+
+<!-- Contenedor para notificaciones -->
+<div id="notificaciones" class="mb-3"></div>
+
+<!-- Token CSRF -->
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <!-- Resto del formulario -->
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Reporte de Ventas</h6>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="exportTableToExcel('reportTable')">
+                    <i class="fas fa-file-excel"></i> Exportar a Excel
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="printReport()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fecha Inicio:</label>
+                            <input type="date" name="fechaInicio" value="@Context.Request.Query["fechaInicio"]" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fecha Fin:</label>
+                            <input type="date" name="fechaFin" value="@Context.Request.Query["fechaFin"]" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Cliente:</label>
+                            <select name="clienteID" class="form-control">
+                                <option value="">Todos los clientes</option>
+                                @foreach (var cliente in ViewBag.Clientes ?? new List<Cliente>())
+                                {
+                                    <option value="@cliente.ClienteID" 
+                                            selected="@(Context.Request.Query["clienteID"] == cliente.ClienteID.ToString())">
+                                        @cliente.Nombre
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary ml-2">
+                            <i class="fas fa-sync"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Resumen de ventas -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Total Ventas
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        $@Model.Sum(v => v.Total).ToString("N0")
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Cantidad de Ventas
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @Model.Count
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Productos Vendidos
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @Model.SelectMany(v => v.ProductosVendidos).Sum(p => p.Cantidad)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Promedio por Venta
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(Model.Any() ? (Model.Sum(v => v.Total) / Model.Count).ToString("N0") : "$0.00")
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row mb-4">
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Ventas por Día</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-area">
+                                <canvas id="ventasPorDiaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Productos Más Vendidos</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-pie pt-4">
+                                <canvas id="productosMasVendidosChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Ventas -->
+            <div class="table-responsive">
+                <table class="table table-bordered" id="reportTable" width="100%" cellspacing="0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Productos</th>
+                            <th>Subtotal</th>
+                            <th>Impuestos</th>
+                            <th>Descuento</th>
+                            <th>Total</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var venta in Model)
+                            {
+                                <tr data-venta-id="@venta.VentaID">
+                                    <td>@venta.VentaID</td>
+                                    <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(venta.Cliente?.Nombre ?? "Cliente no registrado")</td>
+                                    <td>@venta.ProductosVendidos.Count</td>
+                                    <td>$@((venta.Total - (venta.Impuestos ?? 0) + (venta.Descuento ?? 0)).ToString("N0"))</td>
+                                    <td>$@((venta.Impuestos ?? 0).ToString("N0"))</td>
+                                    <td>$@((venta.Descuento ?? 0).ToString("N0"))</td>
+                                    <td>$@venta.Total.ToString("N0")</td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button" onclick="mostrarDetalles(@venta.VentaID)" 
+                                                    class="btn btn-sm btn-outline-info px-3">
+                                                <i class="bi bi-eye me-2"></i>Ver
+                                            </button>
+                                            <button type="button" onclick="confirmarEliminar(@venta.VentaID)" 
+                                                    class="btn btn-sm btn-outline-danger px-3">
+                                                <i class="bi bi-trash me-2"></i>Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center">No se encontraron ventas en el período seleccionado</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-weight-bold bg-light">
+                            <td colspan="4" class="text-right">Totales:</td>
+                            <td>$@Model.Sum(v => v.Total - (v.Impuestos ?? 0) + (v.Descuento ?? 0)).ToString("N0")</td>
+                            <td>$@Model.Sum(v => v.Impuestos ?? 0).ToString("N0")</td>
+                            <td>$@Model.Sum(v => v.Descuento ?? 0).ToString("N0")</td>
+                            <td>$@Model.Sum(v => v.Total).ToString("N0")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1" role="dialog" aria-labelledby="detallesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="detallesModalLabel">Detalles de Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detallesVentaContenido">
+                <!-- Contenido cargado dinámicamente -->
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirDetalles()">
+                    <i class="bi bi-printer me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" role="dialog" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar esta venta? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="eliminarVenta()">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Datos del modelo para los gráficos
+        var ventasData = @Html.Raw(Json.Serialize(Model ?? new List<ReporteVentaVM>()));
+    </script>
+    <script src="~/js/reporteVentas.js"></script>
+}
+
+<style>
+    @@media print {
+        .card-header, form, .btn, .modal, .no-print {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-body {
+            padding: 0 !important;
+        }
+        body {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+    
+    .chart-area {
+        height: 300px;
+    }
+    
+    .chart-pie {
+        height: 300px;
+    }
+</style> 

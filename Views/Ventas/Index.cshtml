@@ -1,0 +1,660 @@
+@model VentaPOS.Models.ViewModels.PanelVentasViewModel
+
+@{
+    ViewData["Title"] = "Panel de Ventas";
+    Layout = "_PanelLayout";
+}
+@Html.AntiForgeryToken()
+
+<style>
+    /* Estilos para las notificaciones toast */
+    @* Usando sección de contenido sin procesar para CSS *@
+    @Html.Raw("@keyframes slideInUp {")
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    @Html.Raw("}")
+
+    .toast-notification {
+        animation: slideInUp 0.3s ease forwards;
+    }
+</style>
+
+<div class="tw-flex tw-h-screen tw-overflow-hidden tw-flex-col md:tw-flex-row">
+    <!-- Contenido Principal (productos) -->
+    <div class="tw-flex-1 tw-overflow-y-auto tw-bg-gray-50 tw-min-w-0">
+        <!-- Barra superior -->
+        <div class="tw-bg-white tw-border-b tw-border-gray-200">
+            <div class="tw-px-6 tw-py-4 tw-flex tw-justify-between tw-items-center">
+                <div>
+                    <h1 class="tw-text-2xl tw-font-bold tw-text-gray-900">Nuevo Pedido</h1>
+                    <p class="tw-text-sm tw-text-gray-500">Crea un nuevo pedido seleccionando los productos</p>
+                </div>
+                <div class="tw-bg-blue-50 tw-rounded-lg tw-px-4 tw-py-2 tw-flex tw-items-center">
+                    <svg class="tw-w-5 tw-h-5 tw-text-blue-600 tw-mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="tw-text-blue-700 tw-font-medium">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor principal con más espacio -->
+        <div class="tw-p-8">
+            <!-- Barra de búsqueda con diseño moderno y más espaciado -->
+            <div class="tw-bg-white tw-rounded-xl tw-shadow-md tw-border tw-border-gray-200 tw-overflow-hidden tw-mb-6">
+                <div class="tw-flex tw-items-center tw-px-5 tw-py-4">
+                    <!-- Icono de búsqueda -->
+                    <div class="tw-text-gray-500 tw-mr-3">
+                        <svg class="tw-w-5 tw-h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Campo de entrada -->
+                    <input type="text" 
+                           id="buscarProducto" 
+                           placeholder="Buscar productos por nombre, código o categoría..." 
+                           class="tw-block tw-w-full tw-bg-transparent tw-border-0 tw-text-gray-900 tw-placeholder-gray-500 focus:tw-outline-none focus:tw-ring-0 tw-text-base">
+                </div>
+            </div>
+
+            <!-- Contador de productos con mayor margen -->
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-6">
+                <p class="tw-text-sm tw-font-medium tw-text-gray-500">
+                    <span id="contadorProductos">@Model.Productos.Count()</span> productos encontrados
+                </p>
+            </div>
+
+            <!-- Tabla de Productos con borde sombreado (sin columna Estado) -->
+            <div class="tw-bg-white tw-rounded-xl tw-shadow-md tw-border tw-border-gray-200 tw-overflow-hidden">
+                <div class="tw-overflow-x-auto">
+                    <table class="tw-w-full tw-table-auto">
+                        <thead class="tw-bg-gray-50 tw-text-gray-700">
+                            <tr>
+                                <th class="tw-px-6 tw-py-4 tw-text-left tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Producto</th>
+                                <th class="tw-px-6 tw-py-4 tw-text-left tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Categoría</th>
+                                <th class="tw-px-6 tw-py-4 tw-text-right tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Precio</th>
+                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Stock</th>
+                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Cantidad</th>
+                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="tw-divide-y tw-divide-gray-200">
+                            @foreach (var producto in Model.Productos)
+                            {
+                                <tr class="hover:tw-bg-gray-50 tw-transition-colors producto-card"
+                                    data-categoria="@(producto.Categoria?.Nombre ?? "")"
+                                    data-nombre="@producto.Nombre"
+                                    data-precio="@producto.Precio"
+                                    data-id="@producto.ProductoID">
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap">
+                                        <div class="tw-flex tw-items-center">
+                                            <div class="tw-flex-shrink-0 tw-h-10 tw-w-10 tw-bg-blue-100 tw-rounded-full tw-flex tw-items-center tw-justify-center">
+                                                <svg class="tw-w-5 tw-h-5 tw-text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                            </div>
+                                            <div class="tw-ml-4">
+                                                <div class="tw-text-sm tw-font-medium tw-text-gray-900">@producto.Nombre</div>
+                                                @if (!string.IsNullOrEmpty(producto.Descripcion))
+                                                {
+                                                    <div class="tw-text-xs tw-text-gray-500">@producto.Descripcion</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap">
+                                        <span class="tw-text-xs tw-font-medium tw-bg-blue-50 tw-text-blue-600 tw-px-2 tw-py-0.5 tw-rounded-full">
+                                            @(producto.Categoria?.Nombre ?? "Sin categoría")
+                                        </span>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-right tw-text-sm tw-font-medium tw-text-blue-600">
+                                        $@producto.Precio.ToString("N0")
+                                    </td>
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
+                                        <span class="tw-text-xs tw-font-medium tw-px-2 tw-py-0.5 tw-rounded-full @(producto.Stock > 0 ? "tw-bg-green-100 tw-text-green-800" : "tw-bg-red-100 tw-text-red-800")">
+                                            @producto.Stock
+                                        </span>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
+                                        <div class="producto-cantidad tw-flex tw-items-center tw-justify-center tw-border tw-border-gray-300 tw-rounded-lg tw-overflow-hidden tw-w-28 tw-mx-auto">
+                                            <button type="button" class="decrementar-cantidad tw-px-2 tw-py-1 tw-bg-gray-100 hover:tw-bg-gray-200">
+                                                <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <input type="number" class="tw-w-12 tw-text-center tw-border-0 tw-focus:ring-0" value="1" min="1" max="99">
+                                            <button type="button" class="incrementar-cantidad tw-px-2 tw-py-1 tw-bg-gray-100 hover:tw-bg-gray-200">
+                                                <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12M6 12h12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
+                                        <button type="button"
+                                                class="agregar-producto tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-bg-blue-600 tw-text-white tw-rounded-lg hover:tw-bg-blue-700 tw-transition-colors tw-font-medium"
+                                                data-producto-id="@producto.ProductoID"
+                                                data-producto-nombre="@producto.Nombre"
+                                                data-producto-precio="@producto.Precio">
+                                            Agregar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Panel lateral para el carrito con borde sombreado -->
+    <div id="carrito" class="tw-w-96 tw-min-w-96 tw-max-w-96 tw-bg-white tw-shadow-lg tw-border tw-border-gray-200 tw-rounded-lg tw-flex tw-flex-col tw-h-full">
+        <!-- Encabezado del carrito -->
+        <div class="tw-p-4 tw-border-b tw-border-gray-200 tw-bg-gray-50 tw-rounded-t-lg">
+            <h2 class="tw-text-lg tw-font-semibold tw-text-gray-800">Carrito de Compra</h2>
+        </div>
+
+        <!-- Contenido del carrito -->
+        <div class="tw-flex-1 tw-overflow-y-auto">
+            <!-- Mensaje de carrito vacío -->
+            <div id="carritoVacio" class="tw-hidden tw-flex tw-items-center tw-justify-center tw-h-32">
+                <p class="tw-text-gray-500 tw-text-lg">Tu carrito está vacío</p>
+            </div>
+
+            <!-- Items del carrito -->
+            <div id="carritoItems" class="tw-w-full">
+                <!-- Los items se agregarán dinámicamente aquí -->
+            </div>
+        </div>
+
+        <!-- Formulario del pedido -->
+        <div class="tw-border-t tw-border-gray-200 tw-p-4">
+            <div class="tw-space-y-4">
+                <!-- Cliente y tipo de pedido -->
+                <div class="tw-space-y-2">
+                    <select id="clienteSelect" class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm">
+                        <option value="">Seleccionar Cliente</option>
+                    </select>
+                    <select id="tipoPedido" class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm">
+                        <option value="Local">Local</option>
+                        <option value="Delivery">Delivery</option>
+                        <option value="Para Llevar">Para Llevar</option>
+                    </select>
+                </div>
+
+                <!-- Notas -->
+                <textarea id="notas" placeholder="Notas especiales..." class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm tw-h-20 tw-resize-none"></textarea>
+
+                <!-- Resumen -->
+                <div class="tw-space-y-2">
+                    <div class="tw-flex tw-justify-between tw-text-sm">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0</span>
+                    </div>
+                    <div class="tw-flex tw-justify-between tw-text-sm">
+                        <span>Descuento:</span>
+                        <span id="descuento">$0</span>
+                    </div>
+                    <div class="tw-flex tw-justify-between tw-text-sm">
+                        <span>IVA (19%):</span>
+                        <span id="impuestos">$0</span>
+                    </div>
+                    <div class="tw-flex tw-justify-between tw-font-semibold tw-text-lg">
+                        <span>Total:</span>
+                        <span id="total">$0</span>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="tw-flex tw-space-x-2">
+                    <button id="crearPedido" class="tw-flex-1 tw-bg-blue-600 tw-text-white tw-rounded-md tw-py-2 tw-text-sm tw-font-medium hover:tw-bg-blue-700">
+                        Crear Pedido
+                    </button>
+                    <button id="cancelarPedido" class="tw-flex-1 tw-bg-gray-200 tw-text-gray-800 tw-rounded-md tw-py-2 tw-text-sm tw-font-medium hover:tw-bg-gray-300">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Cargado');
+            window.carrito = new Map();
+            
+            // Event listeners para botones de agregar productos
+            document.querySelectorAll('.agregar-producto').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productoID = this.dataset.productoId;
+                    const nombre = this.dataset.productoNombre;
+                    const precio = parseFloat(this.dataset.productoPrecio);
+                    
+                    // Obtener la cantidad correctamente
+                    const row = this.closest('tr');
+                    const cantidadInput = row ? row.querySelector('input[type="number"]') : null;
+                    const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+                    
+                    // Agregar al carrito y mostrar notificación
+                    agregarAlCarritoConNotificacion(productoID, nombre, precio, cantidad);
+                    
+                    // Resetear el contador a 1 después de agregar
+                    if (cantidadInput) {
+                        cantidadInput.value = 1;
+                    }
+                });
+            });
+
+            // Función para agregar al carrito con notificación
+            function agregarAlCarritoConNotificacion(id, nombre, precio, cantidad) {
+                // Lógica para agregar al carrito
+                const existingItem = window.carrito.get(id);
+                
+                if (existingItem) {
+                    existingItem.cantidad += cantidad;
+                } else {
+                    window.carrito.set(id, {
+                        id: id,
+                        nombre: nombre,
+                        precio: precio,
+                        cantidad: cantidad
+                    });
+                }
+                
+                // Actualizar carrito
+                window.actualizarCarrito();
+                
+                // Mostrar notificación
+                mostrarNotificacion(`¡${nombre} agregado al carrito!`);
+            }
+            
+            // Función para mostrar notificación de éxito (productos agregados)
+            function mostrarNotificacion(mensaje) {
+                mostrarToast(mensaje, 'success');
+            }
+            
+            // Función para mostrar notificación de procesamiento
+            function mostrarNotificacionProcesando(mensaje) {
+                return mostrarToast(mensaje, 'processing', false);
+            }
+            
+            // Función para mostrar notificación de error
+            function mostrarNotificacionError(mensaje) {
+                mostrarToast(mensaje, 'error');
+            }
+            
+            // Función general para mostrar toast con diferentes estilos
+            function mostrarToast(mensaje, tipo, autoclose = true) {
+                // Eliminar notificaciones anteriores del mismo tipo
+                document.querySelectorAll(`.toast-${tipo}`).forEach(el => el.remove());
+                
+                // Crear elemento de notificación
+                const notificacion = document.createElement('div');
+                notificacion.className = `toast-${tipo}`;
+                notificacion.style.position = 'fixed';
+                notificacion.style.top = '20px';
+                notificacion.style.left = '50%';
+                notificacion.style.transform = 'translateX(-50%)';
+                notificacion.style.padding = '12px 20px';
+                notificacion.style.borderRadius = '8px';
+                notificacion.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+                notificacion.style.zIndex = '9999';
+                notificacion.style.display = 'flex';
+                notificacion.style.alignItems = 'center';
+                notificacion.style.fontWeight = '500';
+                notificacion.style.minWidth = '300px';
+                notificacion.style.justifyContent = 'center';
+                
+                // Configurar estilos según el tipo
+                if (tipo === 'success') {
+                    notificacion.style.backgroundColor = '#10B981'; // Verde
+                    notificacion.style.color = 'white';
+                    notificacion.innerHTML = `
+                        <svg style="width: 20px; height: 20px; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        ${mensaje}
+                    `;
+                } else if (tipo === 'processing') {
+                    notificacion.style.backgroundColor = '#3B82F6'; // Azul
+                    notificacion.style.color = 'white';
+                    
+                    // Crear el icono de carga
+                    const iconoContainer = document.createElement('div');
+                    iconoContainer.style.width = '20px';
+                    iconoContainer.style.height = '20px';
+                    iconoContainer.style.marginRight = '8px';
+                    
+                    const icono = document.createElement('svg');
+                    icono.setAttribute('fill', 'none');
+                    icono.setAttribute('stroke', 'currentColor');
+                    icono.setAttribute('viewBox', '0 0 24 24');
+                    icono.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>';
+                    
+                    iconoContainer.appendChild(icono);
+                    
+                    // Crear el texto
+                    const texto = document.createElement('span');
+                    texto.textContent = mensaje;
+                    
+                    // Agregar elementos a la notificación
+                    notificacion.appendChild(iconoContainer);
+                    notificacion.appendChild(texto);
+                    
+                    // Animar el icono con JavaScript en lugar de CSS
+                    let rotacion = 0;
+                    const animarIcono = setInterval(() => {
+                        rotacion = (rotacion + 6) % 360;
+                        icono.style.transform = `rotate(${rotacion}deg)`;
+                    }, 16); // Aproximadamente 60 FPS
+                    
+                    // Limpiar el intervalo cuando se elimine la notificación
+                    notificacion.animacionInterval = animarIcono;
+                } else if (tipo === 'error') {
+                    notificacion.style.backgroundColor = '#EF4444'; // Rojo
+                    notificacion.style.color = 'white';
+                    notificacion.innerHTML = `
+                        <svg style="width: 20px; height: 20px; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        ${mensaje}
+                    `;
+                }
+                
+                // Agregar al DOM
+                document.body.appendChild(notificacion);
+                
+                // Cerrar automáticamente después de 3 segundos si autoclose es true
+                if (autoclose) {
+                    setTimeout(function() {
+                        cerrarNotificacion(notificacion);
+                    }, 3000);
+                }
+                
+                // Devolver la notificación para poder cerrarla manualmente
+                return notificacion;
+            }
+            
+            // Función para cerrar notificación y limpiar recursos
+            function cerrarNotificacion(notificacion) {
+                if (document.body.contains(notificacion)) {
+                    // Detener la animación si existe
+                    if (notificacion.animacionInterval) {
+                        clearInterval(notificacion.animacionInterval);
+                    }
+                    
+                    // Eliminar del DOM
+                    document.body.removeChild(notificacion);
+                }
+            }
+            
+            // Botones de incrementar/decrementar cantidad
+            document.querySelectorAll('.incrementar-cantidad').forEach(button => {
+                button.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('input[type="number"]');
+                    const currentValue = parseInt(input.value) || 0;
+                    input.value = currentValue + 1;
+                });
+            });
+
+            document.querySelectorAll('.decrementar-cantidad').forEach(button => {
+                button.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('input[type="number"]');
+                    const currentValue = parseInt(input.value) || 2;
+                    if (currentValue > 1) {
+                        input.value = currentValue - 1;
+                    }
+                });
+            });
+
+            // Filtro por categoría
+            if (document.getElementById('filtroCategoria')) {
+                document.getElementById('filtroCategoria').addEventListener('change', function() {
+                    filtrarProductos();
+                });
+            }
+
+            // Función para filtrar productos
+            function filtrarProductos() {
+                const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
+                
+                let productosVisibles = 0;
+                
+                document.querySelectorAll('.producto-card').forEach(card => {
+                    const nombre = card.dataset.nombre.toLowerCase();
+                    const categoria = card.dataset.categoria.toLowerCase();
+                    
+                    // Filtrar por texto de búsqueda
+                    const coincideTexto = nombre.includes(busqueda) || categoria.includes(busqueda);
+                    
+                    const mostrar = coincideTexto;
+                    card.style.display = mostrar ? '' : 'none';
+                    
+                    if (mostrar) productosVisibles++;
+                });
+                
+                // Actualizar contador de productos
+                document.getElementById('contadorProductos').textContent = productosVisibles;
+            }
+
+            // Búsqueda de productos
+            document.getElementById('buscarProducto').addEventListener('input', function(e) {
+                filtrarProductos();
+            });
+
+            // Verificar que el botón existe
+            const btnCrearPedido = document.getElementById('crearPedido');
+            console.log('Botón crear pedido:', btnCrearPedido);
+
+            if (btnCrearPedido) {
+                // Procesar Pedido
+                btnCrearPedido.addEventListener('click', async function() {
+                    console.log('Click en crear pedido');
+                    console.log('Estado actual del carrito:', Array.from(window.carrito.entries())); // Debug del carrito
+                    
+                    if (window.carrito.size === 0) {
+                        mostrarNotificacionError('El carrito está vacío');
+                        return;
+                    }
+
+                    const clienteID = document.getElementById('clienteSelect').value;
+                    const tipoPedido = document.getElementById('tipoPedido').value;
+                    const notas = document.getElementById('notas').value;
+
+                    // Preparar los datos del pedido
+                    const productos = [];
+                    let subtotalCalculado = 0;
+
+                    window.carrito.forEach((item, id) => {
+                        const totalProducto = item.precio * item.cantidad;
+                        subtotalCalculado += totalProducto;
+                        
+                        productos.push({
+                            ProductoId: id.toString(),
+                            Cantidad: item.cantidad,
+                            Precio: item.precio
+                        });
+                    });
+
+                    const impuestosCalculados = subtotalCalculado * 0.19;
+                    const totalCalculado = subtotalCalculado + impuestosCalculados;
+
+                    const requestData = {
+                        ClienteId: clienteID || "0",
+                        TipoPedido: tipoPedido,
+                        Notas: notas || "",
+                        Productos: productos,
+                        Subtotal: subtotalCalculado,
+                        Impuestos: impuestosCalculados,
+                        Descuento: 0,
+                        Total: totalCalculado
+                    };
+
+                    console.log('Datos de la venta a enviar:', JSON.stringify(requestData, null, 2));
+
+                    try {
+                        // Mostrar notificación de procesamiento
+                        const notificacionProcesando = mostrarNotificacionProcesando('Generando pedido...');
+                        
+                        // Deshabilitar botones mientras se procesa
+                        const btnCancelarPedido = document.getElementById('cancelarPedido');
+                        btnCrearPedido.disabled = true;
+                        btnCancelarPedido.disabled = true;
+
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        console.log('Token CSRF:', token);
+
+                        const response = await fetch('/Ventas/CrearPedido', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': token
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+
+                        console.log('Respuesta HTTP:', response.status);
+
+                        // Eliminar notificación de procesamiento
+                        if (document.body.contains(notificacionProcesando)) {
+                            document.body.removeChild(notificacionProcesando);
+                        }
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Error response:', errorText);
+                            throw new Error(`Error al procesar el pedido: ${errorText || response.statusText}`);
+                        }
+
+                        const result = await response.json();
+                        console.log('Respuesta del servidor:', result);
+
+                        if (result.success) {
+                            mostrarNotificacion('¡Pedido creado exitosamente!');
+                            window.limpiarFormulario();
+                            // Redirigir a la página de ListaVentas
+                            window.location.href = '/Ventas/ListaVentas';
+                        } else {
+                            throw new Error(result.message || 'Error al procesar el pedido');
+                        }
+                    } catch (error) {
+                        console.error('Error completo:', error);
+                        mostrarNotificacionError(error.message);
+                    } finally {
+                        // Restaurar los botones
+                        const btnCancelarPedido = document.getElementById('cancelarPedido');
+                        btnCrearPedido.disabled = false;
+                        btnCancelarPedido.disabled = false;
+                    }
+                });
+            }
+
+            // Botón Cancelar
+            const btnCancelarPedido = document.getElementById('cancelarPedido');
+            if (btnCancelarPedido) {
+                btnCancelarPedido.addEventListener('click', function() {
+                    if (window.carrito.size > 0) {
+                        if (confirm('¿Está seguro que desea cancelar el pedido? Se perderán todos los productos agregados.')) {
+                            window.limpiarFormulario();
+                        }
+                    } else {
+                        window.limpiarFormulario();
+                    }
+                });
+            }
+
+            // Definir funciones globales
+            window.actualizarCarrito = function() {
+                const carritoVacio = document.getElementById('carritoVacio');
+                const carritoItems = document.getElementById('carritoItems');
+                const items = Array.from(window.carrito.values());
+
+                if (items.length === 0) {
+                    carritoVacio.classList.remove('tw-hidden');
+                    carritoItems.innerHTML = '';
+                    return;
+                }
+
+                carritoVacio.classList.add('tw-hidden');
+                carritoItems.innerHTML = items.map(item => `
+                    <div class="tw-flex tw-items-center tw-justify-between tw-p-4 tw-border-b tw-border-gray-100">
+                        <div class="tw-flex-1 tw-min-w-0">
+                            <p class="tw-text-sm tw-font-medium tw-text-gray-900">${item.nombre}</p>
+                            <p class="tw-text-sm tw-text-blue-600">$${item.precio.toLocaleString()}</p>
+                        </div>
+                        <div class="tw-flex tw-items-center tw-space-x-4 tw-ml-4">
+                            <div class="tw-flex tw-items-center tw-border tw-border-gray-300 tw-rounded-md tw-overflow-hidden">
+                                <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad - 1})" class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 hover:tw-bg-gray-200">
+                                    −
+                                </button>
+                                <span class="tw-w-8 tw-text-center">${item.cantidad}</span>
+                                <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad + 1})" class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 hover:tw-bg-gray-200">
+                                    +
+                                </button>
+                            </div>
+                            <span class="tw-text-sm tw-font-medium tw-text-gray-900 tw-w-20 tw-text-right">
+                                $${(item.precio * item.cantidad).toLocaleString()}
+                            </span>
+                            <button type="button" onclick="window.eliminarDelCarrito('${item.id}')" class="tw-text-red-500 hover:tw-text-red-700 tw-transition-colors">
+                                <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Actualizar totales
+                const subtotal = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+                const descuento = 0;
+                const impuestos = subtotal * 0.19;
+                const total = subtotal + impuestos - descuento;
+
+                document.getElementById('subtotal').textContent = `$${subtotal.toLocaleString()}`;
+                document.getElementById('descuento').textContent = `$${descuento.toLocaleString()}`;
+                document.getElementById('impuestos').textContent = `$${impuestos.toLocaleString()}`;
+                document.getElementById('total').textContent = `$${total.toLocaleString()}`;
+            };
+            
+            window.actualizarCantidad = function(id, cantidad) {
+                cantidad = parseInt(cantidad);
+                if (cantidad < 1) return;
+                
+                const item = window.carrito.get(id.toString());
+                if (item) {
+                    item.cantidad = cantidad;
+                    window.carrito.set(id.toString(), item);
+                    window.actualizarCarrito();
+                }
+            };
+            
+            window.eliminarDelCarrito = function(id) {
+                window.carrito.delete(id.toString());
+                window.actualizarCarrito();
+                mostrarNotificacion('Producto eliminado del carrito');
+            };
+            
+            window.limpiarFormulario = function() {
+                window.carrito.clear();
+                window.actualizarCarrito();
+                document.getElementById('clienteSelect').value = '';
+                document.getElementById('tipoPedido').value = 'Local';
+                document.getElementById('notas').value = '';
+            };
+
+            // Inicializar la interfaz
+            window.actualizarCarrito();
+        });
+    </script>
+} 

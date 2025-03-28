@@ -1,0 +1,137 @@
+@{
+    ViewData["Title"] = "Panel de Administración";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-5 fw-bold mb-2">Panel de Administración</h1>
+                            <p class="lead mb-0">Bienvenido al panel de administración del sistema</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="mb-0">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</p>
+                            <h5 class="mb-0">@ViewBag.NombreEmpresa</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #4158D0, #C850C0);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title text-white mb-0">Usuarios</h5>
+                        <i class="bi bi-people-fill fs-3 text-white-50"></i>
+                    </div>
+                    <h2 class="display-4 fw-bold text-white mb-0">@ViewBag.TotalUsuarios</h2>
+                    <p class="card-text text-white-50">Usuarios registrados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #00B4DB, #0083B0);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title text-white mb-0">Suscripciones</h5>
+                        <i class="bi bi-card-checklist fs-3 text-white-50"></i>
+                    </div>
+                    <h2 class="display-4 fw-bold text-white mb-0">@ViewBag.TotalSuscripciones</h2>
+                    <p class="card-text text-white-50">Total de suscripciones</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #11998e, #38ef7d);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title text-white mb-0">Activas</h5>
+                        <i class="bi bi-check-circle-fill fs-3 text-white-50"></i>
+                    </div>
+                    <h2 class="display-4 fw-bold text-white mb-0">@ViewBag.SuscripcionesActivas</h2>
+                    <p class="card-text text-white-50">Suscripciones activas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #FF8008, #FFC837);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title text-white mb-0">Planes</h5>
+                        <i class="bi bi-box fs-3 text-white-50"></i>
+                    </div>
+                    <h2 class="display-4 fw-bold text-white mb-0">@ViewBag.PlanesTotales</h2>
+                    <p class="card-text text-white-50">Planes disponibles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Cards -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-gear-fill text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Gestión de Suscripciones</h5>
+                            <p class="card-text text-muted mb-0">Administra todas las suscripciones de la plataforma</p>
+                        </div>
+                    </div>
+                    <p class="card-text mb-4">Gestiona los detalles de las suscripciones, modifica planes y actualiza la información de los usuarios.</p>
+                    <a asp-action="Suscripciones" class="btn btn-primary px-4 py-2">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Gestionar Suscripciones
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-people-fill text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Cambiar Planes de Usuarios</h5>
+                            <p class="card-text text-muted mb-0">Modifica los planes de suscripción de usuarios</p>
+                        </div>
+                    </div>
+                    <p class="card-text mb-4">Busca usuarios específicos y actualiza sus planes de suscripción de manera rápida y sencilla.</p>
+                    <a asp-action="CambiarPlanUsuario" class="btn btn-success px-4 py-2">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Cambiar Planes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .bg-gradient {
+            transition: transform 0.3s ease;
+        }
+        .bg-gradient:hover {
+            transform: translateY(-5px);
+        }
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+        }
+    </style>
+} 

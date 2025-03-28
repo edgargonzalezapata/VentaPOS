@@ -1,0 +1,85 @@
+@model VentaPOS.Models.Producto
+
+<div class="modal-header">
+    <h5 class="modal-title" id="crearProductoModalLabel">
+        <i class="bi bi-box-seam me-2"></i>Nuevo Producto
+    </h5>
+    <button type="button" class="btn-close" onclick="cerrarModal()" aria-label="Close"></button>
+</div>
+
+<form id="createForm" asp-action="Create" method="post" onsubmit="return jQueryAjaxPost(this);">
+    <div class="modal-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        
+        <input type="hidden" name="EmpresaRut" value="@Context.Session.GetString("EmpresaRut")" />
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Codigo" class="form-label"></label>
+                <input asp-for="Codigo" class="form-control" />
+                <span asp-validation-for="Codigo" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label asp-for="Nombre" class="form-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label asp-for="CategoriaID" class="form-label"></label>
+                <select asp-for="CategoriaID" asp-items="ViewBag.Categorias" class="form-select">
+                    <option value="">Seleccione categoría</option>
+                </select>
+                <span asp-validation-for="CategoriaID" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label asp-for="Precio" class="form-label"></label>
+                <input asp-for="Precio" type="number" step="0.01" class="form-control" />
+                <span asp-validation-for="Precio" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label asp-for="Stock" class="form-label"></label>
+                <input asp-for="Stock" type="number" class="form-control" />
+                <span asp-validation-for="Stock" class="text-danger"></span>
+            </div>
+            
+            <div class="col-12">
+                <label asp-for="Descripcion" class="form-label"></label>
+                <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-2"></i>Guardar
+        </button>
+    </div>
+</form>
+
+<script>
+    function jQueryAjaxPost(form) {
+        $.ajax({
+            type: 'POST',
+            url: form.action,
+            data: new FormData(form),
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    cerrarModal();
+                    window.location.reload();
+                } else {
+                    $('#modalContent').html(response.form);
+                    $.validator.unobtrusive.parse("#createForm");
+                }
+            }
+        });
+        return false;
+    }
+</script> 

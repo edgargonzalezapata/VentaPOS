@@ -1,0 +1,167 @@
+.planes-header {
+    text-align: center;
+    margin-bottom: 50px;
+    font-weight: bold;
+    font-size: 2.5rem;
+}
+
+.planes-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.plan-card {
+    width: 300px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    position: relative;
+    transform: translateY(30px);
+    opacity: 0;
+    transition: transform 0.6s ease-out, opacity 0.6s ease-out, box-shadow 0.3s ease;
+}
+
+.plan-card.animated {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.plan-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card.recommended {
+    border: 2px solid #3763e7;
+    transform: scale(1.02) translateY(30px);
+    opacity: 0;
+}
+
+.plan-card.recommended.animated {
+    transform: scale(1.02) translateY(0);
+    opacity: 1;
+}
+
+.plan-card.recommended:hover {
+    transform: scale(1.02) translateY(-10px);
+}
+
+.recommendation-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3763e7;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+.plan-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.plan-price {
+    font-size: 2.2rem;
+    color: #3763e7;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.plan-price-detail {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.plan-features {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 30px;
+}
+
+.plan-features li {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.plan-features li::before {
+    content: "✓";
+    color: #4CAF50;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.btn-plan {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary-plan {
+    background-color: #3763e7;
+    color: white;
+    border: none;
+}
+
+.btn-primary-plan:hover {
+    background-color: #2a4bb8;
+    color: white;
+}
+
+.btn-outline-plan {
+    background-color: white;
+    color: #3763e7;
+    border: 2px solid #3763e7;
+}
+
+.btn-outline-plan:hover {
+    background-color: #f0f5ff;
+}
+
+.welcome-section {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.welcome-text {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+} 

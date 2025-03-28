@@ -1,0 +1,102 @@
+<div class="tw-flex">
+    <div class="tw-flex-shrink-0">
+        <svg class="tw-h-5 tw-w-5 tw-text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+    <div class="tw-ml-3">
+        <h3 class="tw-text-sm tw-font-medium tw-text-green-800">${titulo}</h3>
+        <div class="tw-mt-2 tw-text-sm tw-text-green-700">
+            <p>${mensaje}</p>
+        </div>
+    </div>
+    <div class="tw-ml-auto tw-pl-3">
+        <div class="tw--mx-1.5 tw--my-1.5">
+            <button type="button" class="tw-inline-flex tw-bg-green-50 tw-rounded-md tw-p-1.5 tw-text-green-500 hover:tw-bg-green-100" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                <svg class="tw-h-5 tw-w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+`;
+            
+            // Agregar la notificación al DOM
+            document.body.appendChild(notificacion);
+            
+            // Eliminar después de 5 segundos
+            setTimeout(() => {
+                notificacion.remove();
+            }, 5000);
+        }
+        
+        // Función para mostrar notificación de error
+        function mostrarNotificacionError(titulo, mensaje) {
+            // Crear el elemento de notificación
+            const notificacion = document.createElement('div');
+            notificacion.className = 'tw-fixed tw-top-4 tw-left-1/2 tw-transform tw--translate-x-1/2 tw-bg-red-50 tw-border tw-border-red-200 tw-rounded-md tw-p-4 tw-shadow-lg tw-z-50 tw-min-w-[300px]';
+            notificacion.innerHTML = `
+                <div class="tw-flex">
+                    <div class="tw-flex-shrink-0">
+                        <svg class="tw-h-5 tw-w-5 tw-text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="tw-ml-3">
+                        <h3 class="tw-text-sm tw-font-medium tw-text-red-800">${titulo}</h3>
+                        <div class="tw-mt-2 tw-text-sm tw-text-red-700">
+                            <p>${mensaje}</p>
+                        </div>
+                    </div>
+                    <div class="tw-ml-auto tw-pl-3">
+                        <div class="tw--mx-1.5 tw--my-1.5">
+                            <button type="button" class="tw-inline-flex tw-bg-red-50 tw-rounded-md tw-p-1.5 tw-text-red-500 hover:tw-bg-red-100" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                <svg class="tw-h-5 tw-w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar la notificación al DOM
+            document.body.appendChild(notificacion);
+            
+            // Eliminar después de 5 segundos
+            setTimeout(() => {
+                notificacion.remove();
+            }, 5000);
+        }
+        
+        // Configurar los eventos de filtrado
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('filtroEstado').addEventListener('change', filtrarPedidos);
+            document.getElementById('filtroFecha').addEventListener('change', filtrarPedidos);
+            document.getElementById('filtroCliente').addEventListener('input', filtrarPedidos);
+            
+            // Cerrar menús de estado al hacer clic fuera de ellos
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.cambiar-estado-btn') && !event.target.closest('.estado-menu')) {
+                    document.querySelectorAll('.estado-menu').forEach(menu => {
+                        menu.classList.add('tw-hidden');
+                    });
+                }
+            });
+            
+            // Cerrar modal al hacer clic fuera de él
+            document.getElementById('detallesPedidoModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    cerrarModal();
+                }
+            });
+            
+            // Cerrar modal con la tecla Escape
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && !document.getElementById('detallesPedidoModal').classList.contains('tw-hidden')) {
+                    cerrarModal();
+                }
+            });
+        });
+    </script> 

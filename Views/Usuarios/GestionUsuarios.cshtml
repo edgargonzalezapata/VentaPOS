@@ -1,0 +1,210 @@
+@model IEnumerable<VentaPOS.Models.Usuario>
+
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+    var empresaRut = User.Claims.FirstOrDefault(c => c.Type == "EmpresaRut")?.Value;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+        @if (ViewBag.PuedeCrearUsuarios)
+        {
+            <button class="btn btn-primary" onclick="mostrarCrearUsuario()">
+                <i class="bi bi-person-plus"></i> Nuevo Usuario
+            </button>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Usuarios Registrados</h5>
+                <div>
+                    <span class="badge bg-light text-dark">
+                        Plan Actual: @ViewBag.Plan
+                    </span>
+                    <span class="badge bg-info">
+                        Usuarios: @ViewBag.UsuariosActuales / @ViewBag.MaxUsuarios
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Roles</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usuario in Model)
+                        {
+                            <tr>
+                                <td>@usuario.Nombre</td>
+                                <td>@usuario.Correo</td>
+                                <td>@usuario.Telefono</td>
+                                <td>
+                                    @string.Join(", ", usuario.Rols.Select(r => r.Nombre))
+                                </td>
+                                <td>
+                                    <span class="badge @(usuario.Activo ? "bg-success" : "bg-danger")">
+                                        @(usuario.Activo ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="mostrarDetalles(@usuario.UsuarioId)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Usuario -->
+<div class="modal fade" id="usuarioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" id="modalContent">
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cambio de Contraseña -->
+<div class="modal fade" id="cambioContraseñaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="usuarioIdContraseña" />
+                <div class="mb-3">
+                    <label class="form-label">Nueva Contraseña</label>
+                    <input type="password" id="nuevaContraseña" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirmar Contraseña</label>
+                    <input type="password" id="confirmarContraseña" class="form-control" required />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="cambiarContraseña()">Guardar Contraseña</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle text-primary me-2"></i>
+                <strong class="me-auto">Notificación</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                @TempData["Mensaje"]
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Mostrar modal de creación de usuario
+        function mostrarCrearUsuario() {
+            $.get('/Usuarios/ObtenerFormularioCreacion', { empresaRut: '@ViewBag.EmpresaRut' }, function(data) {
+                $('#modalContent').html(data);
+                $('#usuarioModal').modal('show');
+            });
+        }
+
+        // Mostrar detalles de usuario
+        function mostrarDetalles(id) {
+            $.get('/Usuarios/ObtenerDetallesUsuario/' + id, function(data) {
+                $('#modalContent').html(data);
+                $('#usuarioModal').modal('show');
+            });
+        }
+
+        // Crear nuevo usuario
+        function crearUsuario() {
+            var formData = $('#formCrearUsuario').serialize();
+            $.post('/Usuarios/CrearUsuario', formData, function(response) {
+                if (response.success) {
+                    $('#usuarioModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
+
+        // Guardar cambios de usuario
+        function guardarCambios() {
+            var formData = $('#formEditarUsuario').serialize();
+            $.post('/Usuarios/ActualizarUsuario', formData, function(response) {
+                if (response.success) {
+                    $('#usuarioModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
+
+        // Eliminar usuario
+        function eliminarUsuario(id) {
+            if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+                $.post('/Usuarios/EliminarUsuario/' + id, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                });
+            }
+        }
+
+        // Mostrar modal de cambio de contraseña
+        function mostrarCambioContraseña(id) {
+            $('#usuarioIdContraseña').val(id);
+            $('#cambioContraseñaModal').modal('show');
+        }
+
+        // Cambiar contraseña
+        function cambiarContraseña() {
+            var id = $('#usuarioIdContraseña').val();
+            var nuevaContraseña = $('#nuevaContraseña').val();
+            var confirmarContraseña = $('#confirmarContraseña').val();
+
+            if (nuevaContraseña !== confirmarContraseña) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+
+            $.post('/Usuarios/CambiarContraseña', { id: id, nuevaContraseña: nuevaContraseña }, function(response) {
+                if (response.success) {
+                    $('#cambioContraseñaModal').modal('hide');
+                    alert('Contraseña actualizada exitosamente');
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
+    </script>
+} 

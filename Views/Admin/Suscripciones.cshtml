@@ -1,0 +1,56 @@
+@using VentaPOS.Models
+@model IEnumerable<Suscripciones>
+
+@{
+    ViewData["Title"] = "Gestión de Suscripciones";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="card-title">@ViewData["Title"]</h1>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva Suscripción
+                </a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Empresa</th>
+                            <th>Plan</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Empresa.NombreEmpresa</td>
+                            <td>@item.Plan.Nombre</td>
+                            <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                            <td>@item.FechaFin.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge @(item.Activa ? "bg-success" : "bg-secondary")">
+                                    @(item.Activa ? "Activa" : "Inactiva")
+                                </span>
+                            </td>
+                            <td>
+                                <a asp-action="EditarSuscripcion" asp-route-id="@item.SuscripcionID" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

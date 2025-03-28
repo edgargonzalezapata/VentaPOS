@@ -1,0 +1,90 @@
+@model ReporteVentaVM
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Venta #@Model.VentaID</h5>
+            </div>
+            <div class="col-md-6 text-right">
+                <h5>@Model.Fecha.ToString("dd/MM/yyyy HH:mm")</h5>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="font-weight-bold">Cliente:</h6>
+                <p>@(Model.Cliente?.Nombre ?? "Cliente no registrado")</p>
+                @if (Model.Cliente != null)
+                {
+                    <p>
+                        @if (!string.IsNullOrEmpty(Model.Cliente.Telefono))
+                        {
+                            <span>Tel: @Model.Cliente.Telefono</span><br />
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Cliente.Email))
+                        {
+                            <span>Email: @Model.Cliente.Email</span>
+                        }
+                    </p>
+                }
+            </div>
+            <div class="col-md-6 text-right">
+                <h6 class="font-weight-bold">Detalles de Pago:</h6>
+                <p>
+                    Forma de Pago: @Model.FormaPago<br />
+                    Estado: @Model.Estado
+                </p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-center">Cantidad</th>
+                        <th class="text-right">Precio Unitario</th>
+                        <th class="text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ProductosVendidos)
+                    {
+                        <tr>
+                            <td>@item.Nombre</td>
+                            <td class="text-center">@item.Cantidad</td>
+                            <td class="text-right">@item.Precio.ToString("C")</td>
+                            <td class="text-right">@item.Subtotal.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right font-weight-bold">Subtotal:</td>
+                        <td class="text-right">@((Model.Total - (Model.Impuestos ?? 0) + (Model.Descuento ?? 0)).ToString("N0"))</td>
+                    </tr>
+                    @if (Model.Impuestos.HasValue && Model.Impuestos.Value > 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-right font-weight-bold">Impuestos:</td>
+                            <td class="text-right">@Model.Impuestos.Value.ToString("N0")</td>
+                        </tr>
+                    }
+                    @if (Model.Descuento.HasValue && Model.Descuento.Value > 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-right font-weight-bold">Descuento:</td>
+                            <td class="text-right">-@Model.Descuento.Value.ToString("N0")</td>
+                        </tr>
+                    }
+                    <tr class="bg-light">
+                        <td colspan="3" class="text-right font-weight-bold">Total:</td>
+                        <td class="text-right font-weight-bold">@Model.Total.ToString("N0")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,147 @@
+@model VentaPOS.Models.Suscripciones
+
+@{
+    ViewData["Title"] = "Editar Suscripción";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="card-title">Editar Suscripción</h1>
+                <a asp-action="Suscripciones" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a la Lista
+                </a>
+            </div>
+            <p class="card-text">Modifica los detalles de la suscripción seleccionada.</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Detalles de la Suscripción</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditarSuscripcion">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="SuscripcionID" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="PlanID" class="form-label">Plan</label>
+                            <select asp-for="PlanID" class="form-select" asp-items="ViewBag.Planes"></select>
+                            <span asp-validation-for="PlanID" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="FechaInicio" class="form-label">Fecha de Inicio</label>
+                            <input asp-for="FechaInicio" class="form-control" type="date" />
+                            <span asp-validation-for="FechaInicio" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="FechaFin" class="form-label">Fecha de Fin</label>
+                            <input asp-for="FechaFin" class="form-control" type="date" />
+                            <span asp-validation-for="FechaFin" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="MaxUsuarios" class="form-label">Máximo de Usuarios</label>
+                            <input asp-for="MaxUsuarios" class="form-control" />
+                            <span asp-validation-for="MaxUsuarios" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="FormaPago" class="form-label">Forma de Pago</label>
+                            <select asp-for="FormaPago" class="form-select">
+                                <option value="">Seleccione...</option>
+                                <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                                <option value="Transferencia">Transferencia Bancaria</option>
+                                <option value="Paypal">PayPal</option>
+                                <option value="Otro">Otro Método</option>
+                            </select>
+                            <span asp-validation-for="FormaPago" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input asp-for="Pagado" class="form-check-input" />
+                            <label asp-for="Pagado" class="form-check-label">Pagado</label>
+                            <span asp-validation-for="Pagado" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input asp-for="Activa" class="form-check-input" />
+                            <label asp-for="Activa" class="form-check-label">Activa</label>
+                            <span asp-validation-for="Activa" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información de la Empresa</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Empresa</label>
+                        <input type="text" class="form-control" value="@Model.Empresa.NombreEmpresa" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">RUT</label>
+                        <input type="text" class="form-control" value="@Model.Empresa.Rut" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <a asp-controller="Usuarios" asp-action="GestionUsuarios" asp-route-rut="@Model.EmpresaRut" class="btn btn-info w-100">
+                            <i class="bi bi-building-gear"></i> Gestionar Esta Empresa
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Usuarios Asociados (@Model.Usuarios.Count)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Usuarios.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var usuario in Model.Usuarios)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@usuario.Nombre</strong>
+                                        <small class="d-block text-muted">@usuario.Correo</small>
+                                    </div>
+                                    <a asp-action="GestionarPlanesUsuario" asp-route-id="@usuario.UsuarioId" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-gear"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No hay usuarios asociados a esta suscripción.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+} 

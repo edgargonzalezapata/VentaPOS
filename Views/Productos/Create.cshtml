@@ -1,0 +1,119 @@
+@model VentaPOS.Models.Producto
+
+@{
+    ViewData["Title"] = "Nuevo Producto";
+    Layout = "_PanelLayout";
+}
+
+<div class="tw-max-w-2xl tw-mx-auto">
+    <div class="tw-flex tw-items-center tw-gap-3 tw-mb-8">
+        <a href="@Url.Action("Index")" class="tw-text-gray-500 hover:tw-text-blue-600">
+            <i class="bi bi-arrow-left-short tw-text-2xl"></i>
+        </a>
+        <h1 class="tw-text-2xl tw-font-bold tw-text-gray-900">Nuevo Producto</h1>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="tw-bg-red-50 tw-border-l-4 tw-border-red-400 tw-p-4 tw-mb-6">
+            <div class="tw-flex">
+                <div class="tw-flex-shrink-0">
+                    <svg class="tw-h-5 tw-w-5 tw-text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="tw-ml-3">
+                    <h3 class="tw-text-sm tw-font-medium tw-text-red-800">
+                        Hay errores en el formulario:
+                    </h3>
+                    <div class="tw-mt-2 tw-text-sm tw-text-red-700">
+                        <div asp-validation-summary="All" class="tw-list-disc tw-list-inside"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="tw-bg-white tw-rounded-lg tw-p-6 tw-border tw-border-gray-200">
+        <form asp-action="Create" method="post" class="tw-space-y-6">
+            <input type="hidden" name="EmpresaRut" value="@Context.Session.GetString("EmpresaRut")" />
+            
+            <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-6">
+                <!-- Código -->
+                <div>
+                    <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Código</label>
+                    <input asp-for="Codigo" 
+                           class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5" 
+                           placeholder="Ej: PROD-001" 
+                           required />
+                    <span asp-validation-for="Codigo" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+                </div>
+
+                <!-- Nombre -->
+                <div>
+                    <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Nombre</label>
+                    <input asp-for="Nombre" 
+                           class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5" 
+                           placeholder="Ej: Laptop HP EliteBook" 
+                           required />
+                    <span asp-validation-for="Nombre" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+                </div>
+
+                <!-- Categoría -->
+                <div>
+                    <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Categoría</label>
+                    <select asp-for="CategoriaID" asp-items="ViewBag.Categorias" 
+                            class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5"
+                            required>
+                        <option value="">Seleccione categoría</option>
+                    </select>
+                    <span asp-validation-for="CategoriaID" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+                </div>
+
+                <!-- Precio -->
+                <div>
+                    <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Precio</label>
+                    <input asp-for="Precio" type="number" 
+                           class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5" 
+                           placeholder="Ej: 150000" 
+                           required />
+                    <span asp-validation-for="Precio" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+                </div>
+
+                <!-- Stock -->
+                <div>
+                    <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Stock</label>
+                    <input asp-for="Stock" type="number" 
+                           class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5" 
+                           placeholder="Ej: 50" 
+                           required />
+                    <span asp-validation-for="Stock" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+                </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="tw-mb-6">
+                <label class="tw-block tw-mb-2 tw-text-sm tw-font-medium tw-text-gray-900">Descripción</label>
+                <textarea asp-for="Descripcion" 
+                          class="tw-bg-gray-50 tw-border tw-border-gray-300 tw-text-gray-900 tw-text-sm tw-rounded-lg focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-block tw-w-full tw-p-2.5" 
+                          rows="3"
+                          placeholder="Detalles del producto..."></textarea>
+                <span asp-validation-for="Descripcion" class="tw-text-red-500 tw-text-sm tw-mt-1 tw-block"></span>
+            </div>
+
+            <!-- Botones -->
+            <div class="tw-flex tw-justify-end tw-gap-3 tw-mt-6 tw-w-full">
+                <a href="@Url.Action("Index")" class="tw-rounded-md tw-bg-amber-600 tw-py-2 tw-px-4 tw-border tw-border-transparent tw-text-center tw-text-sm tw-text-slate-800 tw-transition-all tw-shadow-md hover:tw-shadow-lg focus:tw-bg-amber-700 focus:tw-shadow-none active:tw-bg-amber-700 hover:tw-bg-amber-700">
+                    Cancelar
+                </a>
+                <button type="submit" class="tw-rounded-md tw-bg-blue-600 tw-py-2 tw-px-4 tw-border tw-border-transparent tw-text-center tw-text-sm tw-text-white tw-transition-all tw-shadow-md hover:tw-shadow-lg focus:tw-bg-blue-700 focus:tw-shadow-none active:tw-bg-blue-700 hover:tw-bg-blue-700">
+                    <i class="bi bi-save tw-mr-2"></i>Guardar Producto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

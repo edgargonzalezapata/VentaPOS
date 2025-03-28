@@ -1,0 +1,153 @@
+@model VentaPOS.Models.BuscarUsuarioViewModel
+
+@{
+    ViewData["Title"] = "Asociar Usuario Existente";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users mr-2"></i> Asociar Usuario Existente</h2>
+        <a asp-action="GestionUsuarios" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a Gestión de Usuarios
+        </a>
+    </div>
+    
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-2"></i> <strong>Atención:</strong> @ViewBag.Error
+            
+            @if (ViewBag.MostrarBtnPlanes)
+            {
+                <div class="mt-3">
+                    <a href="@Url.Action("Index", "Planes")" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart mr-1"></i> Ver planes disponibles
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <strong>¿Qué es esto?</strong> Esta función te permite buscar usuarios existentes de tu empresa y asociarlos a tu cuenta para que puedan acceder a tu suscripción.
+        </div>
+    }
+    
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8">
+            @if (ViewBag.PuedeAsociarUsuarios != false)
+            {
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-search mr-2"></i>Buscar Usuario por Nombre o Correo</h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="BuscarUsuario" method="post">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input asp-for="TerminoBusqueda" class="form-control form-control-lg" placeholder="Ingresa nombre o correo del usuario a buscar" />
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="TerminoBusqueda" class="text-danger"></span>
+                                <small class="form-text text-muted">Busca usuarios por nombre o correo electrónico para asociarlos a tu cuenta.</small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+
+            @if (ViewBag.PuedeAsociarUsuarios != false && Model.UsuariosEncontrados != null && Model.UsuariosEncontrados.Any())
+            {
+                <div class="card mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Resultados de la búsqueda</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                        <th>Teléfono</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var usuario in Model.UsuariosEncontrados)
+                                    {
+                                        <tr>
+                                            <td>@usuario.Nombre</td>
+                                            <td>@usuario.Correo</td>
+                                            <td>@(string.IsNullOrEmpty(usuario.Telefono) ? "No disponible" : usuario.Telefono)</td>
+                                            <td>
+                                                <form asp-action="AsociarUsuarioExistente" method="post">
+                                                    <input type="hidden" name="usuarioId" value="@usuario.UsuarioId" />
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-link mr-1"></i> Asociar a mi cuenta
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (ViewBag.PuedeAsociarUsuarios != false && !string.IsNullOrEmpty(Model.TerminoBusqueda))
+            {
+                <div class="alert alert-warning mt-4">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>No se encontraron usuarios</strong> 
+                    <p>No se encontraron usuarios que coincidan con el término "<strong>@Model.TerminoBusqueda</strong>".</p>
+                    <p>Posibles razones:</p>
+                    <ul>
+                        <li>El usuario no existe en tu empresa</li>
+                        <li>El usuario ya está asociado a tu cuenta</li>
+                        <li>Has escrito mal el nombre o correo electrónico</li>
+                    </ul>
+                    <p>Intenta con otro término de búsqueda.</p>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Información</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <i class="fas fa-info-circle text-info"></i> 
+                        Utiliza esta función para asociar usuarios existentes a tu cuenta.
+                    </p>
+                    <hr />
+                    <p>
+                        <i class="fas fa-users text-primary"></i>
+                        Solo se mostrarán usuarios que pertenezcan a tu misma empresa y que no estén ya asociados a tu cuenta.
+                    </p>
+                    <hr />
+                    <p>
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Recuerda que tu plan actual limita la cantidad de usuarios que puedes asociar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

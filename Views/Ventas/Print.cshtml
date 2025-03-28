@@ -1,0 +1,249 @@
+@model VentaPOS.Models.Venta
+@{
+    Layout = null;
+    // Calcular la propina sugerida (10% del total)
+    decimal propinaSugerida = Math.Round(Model.Total * 0.1m, 0);
+    decimal totalConPropina = Model.Total + propinaSugerida;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket #@Model.VentaID</title>
+    <style>
+        /* Estilos para papel térmico de 80mm */
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            width: 80mm; /* Ancho del papel térmico */
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .ticket {
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #000;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .header p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .info-item {
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 3px 2px;
+            font-size: 12px;
+        }
+
+        .description {
+            width: 40%;
+        }
+
+        .quantity {
+            width: 15%;
+            text-align: center;
+        }
+
+        .price {
+            width: 20%;
+            text-align: right;
+        }
+
+        .amount {
+            width: 25%;
+            text-align: right;
+        }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+        }
+
+        .total-section {
+            text-align: right;
+            margin: 5px 0;
+        }
+
+        .grand-total {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #000;
+            font-size: 12px;
+        }
+
+        /* Agregar estilos para la sección de propina */
+        .propina-section {
+            margin-top: 10px;
+            border: 1px dashed #000;
+            padding: 8px;
+        }
+        
+        .propina-title {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .propina-option {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        
+        .propina-checkbox {
+            margin-right: 5px;
+        }
+        
+        .total-with-tip {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+
+        @@media print {
+            body {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+            @@page {
+                size: 80mm auto; /* Ancho 80mm, altura automática */
+                margin: 0mm;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <h1>COMPROBANTE DE VENTA</h1>
+            <p>Ticket #@Model.VentaID</p>
+            <p>Fecha: @Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+
+        <div class="info-item">Cliente: @(Model.Cliente?.Nombre ?? "General")</div>
+        <div class="info-item">Método: @Model.MetodoPago</div>
+
+        <div class="divider"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="description">PRODUCTO</th>
+                    <th class="quantity">CANT</th>
+                    <th class="price">PRECIO</th>
+                    <th class="amount">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in Model.DetallesVentas)
+                {
+                    <tr>
+                        <td class="description">@detalle.Producto.Nombre</td>
+                        <td class="quantity">@detalle.Cantidad</td>
+                        <td class="price">$@string.Format("{0:N0}", detalle.PrecioUnitario)</td>
+                        <td class="amount">$@string.Format("{0:N0}", detalle.Cantidad * detalle.PrecioUnitario)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <div class="total-section">
+            <div class="grand-total">TOTAL VENTA: $@string.Format("{0:N0}", Model.Total)</div>
+            
+            <!-- Agregar sección de propina -->
+            <div class="propina-section">
+                <div class="propina-title">PROPINA SUGERIDA</div>
+                <div class="propina-option">
+                    <span>□ 10% ($@string.Format("{0:N0}", propinaSugerida))</span>
+                    <span>___________</span>
+                </div>
+                <div class="propina-option">
+                    <span>□ Otra cantidad:</span>
+                    <span>___________</span>
+                </div>
+                <div class="propina-option">
+                    <span>□ Sin propina</span>
+                    <span>___________</span>
+                </div>
+                
+                <div class="total-with-tip">
+                    TOTAL CON PROPINA SUGERIDA: $@string.Format("{0:N0}", totalConPropina)
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Comentarios))
+        {
+            <div class="divider"></div>
+            <div>
+                <strong>Comentarios:</strong>
+                <p>@Model.Comentarios</p>
+            </div>
+        }
+
+        <div class="footer">
+            <p>GRACIAS POR SU COMPRA</p>
+            <p>www.miempresa.com</p>
+        </div>
+    </div>
+
+    <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #4a6fdc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Imprimir
+        </button>
+        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+            Cerrar
+        </button>
+    </div>
+
+    <script>
+        // Mostrar automáticamente el diálogo de impresión después de cargar la página
+        window.onload = function() {
+            // Esperar un momento para que se cargue todo el contenido
+            setTimeout(function() {
+                // Mostrar diálogo de impresión automáticamente
+                window.print();
+            }, 800);
+        };
+    </script>
+</body>
+</html> 

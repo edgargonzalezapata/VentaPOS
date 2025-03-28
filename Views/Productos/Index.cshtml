@@ -1,0 +1,241 @@
+@model VentaPOS.Models.ViewModels.ProductosIndexVM
+
+@{
+    ViewData["Title"] = "Productos";
+    Layout = "_PanelLayout";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">
+            <i class="bi bi-box me-2"></i>Productos
+        </h1>
+        <button onclick="abrirModalCrear()" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-2"></i>Agregar Producto
+        </button>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-table me-2"></i>Listado de Productos
+        </div>
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row mb-4 g-3">
+                <div class="col-md-4">
+                    <input type="text" 
+                           id="buscarProducto" 
+                           class="form-control" 
+                           placeholder="Buscar..." 
+                           value="@ViewBag.SearchTerm">
+                </div>
+                <div class="col-md-3">
+                    <select id="filtroCategoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.CategoriaID" selected="@((int?)ViewBag.CategoriaID == categoria.CategoriaID)">
+                                @categoria.Nombre
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="ordenarPor" class="form-select">
+                        <option value="nombre" selected="@(ViewBag.OrdenarPor == "nombre")">Ordenar por</option>
+                        <option value="nombre_desc" selected="@(ViewBag.OrdenarPor == "nombre_desc")">Nombre (Z-A)</option>
+                        <option value="precio_asc" selected="@(ViewBag.OrdenarPor == "precio_asc")">Precio ascendente</option>
+                        <option value="precio_desc" selected="@(ViewBag.OrdenarPor == "precio_desc")">Precio descendente</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button onclick="aplicarFiltros()" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-funnel me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th class="text-center">Categoría</th>
+                            <th class="text-center">Precio</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Últ. Actualización</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var producto in Model.Productos)
+                        {
+                            <tr>
+                                <td>@producto.Codigo</td>
+                                <td>
+                                    <div class="fw-bold">@producto.Nombre</div>
+                                    @if (!string.IsNullOrEmpty(producto.Descripcion))
+                                    {
+                                        <div class="text-muted small">@producto.Descripcion</div>
+                                    }
+                                </td>
+                                <td class="text-center">@producto.Categoria?.Nombre</td>
+                                <td class="text-end">@producto.Precio.ToString("$#,##0")</td>
+                                <td class="text-center">
+                                    <span class="badge @(producto.Stock > 0 ? "bg-success" : "bg-danger")">
+                                        @producto.Stock
+                                    </span>
+                                </td>
+                                <td class="text-center">@producto.UltimaActualizacion?.ToString("g")</td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="@Url.Action("Edit", new { id = producto.ProductoID })" 
+                                           class="btn btn-sm btn-outline-primary px-3">
+                                            <i class="bi bi-pencil me-2"></i>Editar
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@producto.ProductoID" method="post"
+                                              onsubmit="return confirm('¿Está seguro de eliminar este producto?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger px-3">
+                                                <i class="bi bi-trash me-2"></i>Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de creación -->
+<div class="modal fade" id="crearProductoModal" tabindex="-1" aria-labelledby="crearProductoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="crearProductoModalLabel">
+                    <i class="bi bi-box-seam me-2"></i>Nuevo Producto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form asp-action="Create" method="post" id="createForm">
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <input type="hidden" name="EmpresaRut" value="@Context.Session.GetString("EmpresaRut")" />
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Código</label>
+                            <input name="Codigo" class="form-control" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Codigo" data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nombre</label>
+                            <input name="Nombre" class="form-control" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Categoría</label>
+                            <select name="CategoriaID" class="form-select" required>
+                                <option value="">Seleccione categoría</option>
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.CategoriaID">@categoria.Nombre</option>
+                                }
+                            </select>
+                            <span class="text-danger field-validation-valid" data-valmsg-for="CategoriaID" data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Precio</label>
+                            <input name="Precio" type="number" step="0.01" class="form-control" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Precio" data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Stock</label>
+                            <input name="Stock" type="number" class="form-control" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Stock" data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <textarea name="Descripcion" class="form-control" rows="3"></textarea>
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Descripcion" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function aplicarFiltros() {
+            const params = new URLSearchParams({
+                searchTerm: document.getElementById('buscarProducto').value,
+                categoriaID: document.getElementById('filtroCategoria').value,
+                ordenarPor: document.getElementById('ordenarPor').value
+            });
+            
+            window.location.href = `?${params.toString()}`;
+        }
+
+        // Event listeners para filtros en tiempo real
+        document.getElementById('buscarProducto').addEventListener('input', aplicarFiltros);
+        document.getElementById('filtroCategoria').addEventListener('change', aplicarFiltros);
+        document.getElementById('ordenarPor').addEventListener('change', aplicarFiltros);
+
+        function abrirModalCrear() {
+            $('#crearProductoModal').modal('show');
+        }
+
+        // Manejar el envío del formulario con AJAX
+        $('#createForm').submit(function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#crearProductoModal').modal('hide');
+                        window.location.reload();
+                    } else {
+                        $('#crearProductoModal').modal('handleUpdate');
+                        $(document.body).html(response);
+                    }
+                },
+                error: function(xhr) {
+                    $('#crearProductoModal').modal('handleUpdate');
+                    $(document.body).html(xhr.responseText);
+                }
+            });
+        });
+
+        // Reiniciar el formulario al cerrar el modal
+        $('#crearProductoModal').on('hidden.bs.modal', function() {
+            $(this).find('form')[0].reset();
+            $(this).find('.text-danger').text('');
+        });
+    </script>
+} 

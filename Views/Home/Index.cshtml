@@ -1,0 +1,70 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="tw-min-h-screen tw-bg-gray-50">
+    <!-- Hero Section -->
+    <div class="tw-bg-white tw-py-16">
+        <div class="tw-container tw-mx-auto tw-px-4 tw-text-center">
+            <h1 class="tw-text-4xl tw-font-bold tw-text-gray-900 tw-mb-4">
+                Bienvenido a VentaPOS
+            </h1>
+            <p class="tw-text-lg tw-text-gray-600 tw-mb-8">
+                Sistema de gestión de ventas e inventario para tu negocio
+            </p>
+            @if (Context.Session.GetString("UserEmail") == null)
+            {
+                <div class="tw-space-x-4">
+                    <a href="@Url.Action("Login", "Usuarios")" 
+                       class="tw-bg-blue-600 tw-text-white tw-px-6 tw-py-3 tw-rounded-lg tw-font-medium hover:tw-bg-blue-700 tw-transition-colors">
+                        Iniciar Sesión
+                    </a>
+                    <a href="@Url.Action("Registro", "Usuarios")" 
+                       class="tw-bg-white tw-text-blue-600 tw-px-6 tw-py-3 tw-rounded-lg tw-font-medium tw-border tw-border-blue-600 hover:tw-bg-blue-50 tw-transition-colors">
+                        Registrarse
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="tw-py-16">
+        <div class="tw-container tw-mx-auto tw-px-4">
+            <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-8">
+                <!-- Feature 1 -->
+                <div class="tw-bg-white tw-p-6 tw-rounded-lg tw-shadow">
+                    <div class="tw-text-blue-600 tw-mb-4">
+                        <i class="bi bi-cart-check tw-text-3xl"></i>
+                    </div>
+                    <h3 class="tw-text-xl tw-font-semibold tw-mb-2">Gestión de Ventas</h3>
+                    <p class="tw-text-gray-600">
+                        Control completo de tus ventas diarias, reportes y estadísticas en tiempo real.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="tw-bg-white tw-p-6 tw-rounded-lg tw-shadow">
+                    <div class="tw-text-blue-600 tw-mb-4">
+                        <i class="bi bi-box-seam tw-text-3xl"></i>
+                    </div>
+                    <h3 class="tw-text-xl tw-font-semibold tw-mb-2">Control de Inventario</h3>
+                    <p class="tw-text-gray-600">
+                        Administra tu inventario, categorías y productos de manera eficiente.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="tw-bg-white tw-p-6 tw-rounded-lg tw-shadow">
+                    <div class="tw-text-blue-600 tw-mb-4">
+                        <i class="bi bi-graph-up tw-text-3xl"></i>
+                    </div>
+                    <h3 class="tw-text-xl tw-font-semibold tw-mb-2">Reportes Detallados</h3>
+                    <p class="tw-text-gray-600">
+                        Obtén informes detallados de tus ventas y el rendimiento de tu negocio.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

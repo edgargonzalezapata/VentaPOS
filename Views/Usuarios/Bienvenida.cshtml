@@ -1,0 +1,199 @@
+@model List<VentaPOS.Models.Usuario>
+
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Tarjeta de Bienvenida -->
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="display-5 mb-2">
+                                <i class="bi bi-house-door text-primary me-2"></i>
+                                Bienvenido, @Context.Session.GetString("UserName")
+                            </h1>
+                            <p class="text-muted mb-0">Panel de Control de su Empresa</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="mb-1 text-muted">RUT: @Context.Session.GetString("EmpresaRut")</p>
+                            <small class="text-success">
+                                <i class="bi bi-check-circle-fill"></i> Cuenta Activa
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Actual -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-star me-2"></i>
+                        Plan Actual
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    @if (ViewBag.Suscripcion != null)
+                    {
+                        <div class="text-center mb-4">
+                            <h2 class="display-6 text-primary mb-0">@ViewBag.Suscripcion.Plan.Nombre</h2>
+                            @if (ViewBag.DemoActiva == true)
+                            {
+                                <div class="alert alert-info mt-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clock-history fs-3 me-3"></i>
+                                        <div>
+                                            <h5 class="mb-1">Período de Prueba</h5>
+                                            <p class="mb-0">Te quedan <strong>@ViewBag.DiasRestantes días</strong> de prueba gratuita</p>
+                                            @if (ViewBag.DiasRestantes <= 2)
+                                            {
+                                                <div class="mt-2">
+                                                    <a asp-action="SolicitarPlan" class="btn btn-primary btn-sm">
+                                                        <i class="bi bi-star-fill me-1"></i>
+                                                        Actualizar a Plan Completo
+                                                    </a>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">Plan Empresarial</p>
+                            }
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h4 class="mb-1">@ViewBag.UsuariosActuales/@ViewBag.Suscripcion.MaxUsuarios</h4>
+                                    <small class="text-muted">Usuarios</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h4 class="mb-1">@ViewBag.Suscripcion.FechaFin.ToString("dd/MM/yyyy")</h4>
+                                    <small class="text-muted">Vence el</small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <div class="d-grid">
+                            <a asp-action="SolicitarPlan" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-up-circle me-2"></i>
+                                Actualizar Plan
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-exclamation-circle text-warning display-4"></i>
+                            <h5 class="mt-3">No tienes una suscripción activa</h5>
+                            <p class="text-muted">Para comenzar a usar todas las funcionalidades, necesitas activar un plan.</p>
+                            <a asp-action="SolicitarPlan" class="btn btn-primary mt-3">
+                                <i class="bi bi-cart-plus me-2"></i>
+                                Ver Planes Disponibles
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de Pagos -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Historial de Pagos
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    @if (ViewBag.Pagos != null && ViewBag.Pagos.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Plan</th>
+                                        <th>Estado</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var pago in ViewBag.Pagos)
+                                    {
+                                        <tr>
+                                            <td>@pago.FechaPago.ToString("dd/MM/yyyy")</td>
+                                            <td>@pago.Plan</td>
+                                            <td>
+                                                @if (pago.Pagado)
+                                                {
+                                                    <span class="badge bg-success">Pagado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">Pendiente</span>
+                                                }
+                                            </td>
+                                            <td>$@pago.Monto.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-receipt text-muted display-4"></i>
+                            <h5 class="mt-3">Sin historial de pagos</h5>
+                            <p class="text-muted">No hay registros de pagos anteriores.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h4 class="mb-3">
+                        <i class="bi bi-lightning-charge me-2 text-primary"></i>
+                        Acciones Rápidas
+                    </h4>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a asp-action="GestionUsuarios" asp-route-rut="@Context.Session.GetString("EmpresaRut")" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-people me-2"></i>
+                                Gestionar Usuarios
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-action="SolicitarPlan" class="btn btn-outline-success w-100">
+                                <i class="bi bi-star me-2"></i>
+                                Cambiar Plan
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-action="Logout" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

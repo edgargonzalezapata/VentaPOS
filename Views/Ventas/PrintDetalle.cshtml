@@ -1,0 +1,172 @@
+@model VentaPOS.Models.Venta
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detalle Venta #@Model.VentaID</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            width: 80mm;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .detalle-venta {
+            width: 100%;
+            background-color: white;
+            box-shadow: none;
+        }
+
+        .info-venta {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 3px 2px;
+            font-size: 12px;
+        }
+
+        .description { width: 40%; }
+        .quantity { width: 15%; text-align: center; }
+        .price { width: 20%; text-align: right; }
+        .amount { width: 25%; text-align: right; }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+        }
+
+        .total-section {
+            text-align: right;
+            margin: 5px 0;
+        }
+
+        .grand-total {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        @@media print {
+            body {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+            @@page {
+                size: 80mm auto;
+                margin: 0mm;
+            }
+            .no-print {
+                display: none;
+            }
+            html, body {
+                background-color: white;
+            }
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .print-button, .close-button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+        }
+
+        .print-button {
+            background-color: #4a6fdc;
+        }
+
+        .close-button {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="detalle-venta">
+        <div class="info-venta">
+            <div>Venta #@Model.VentaID</div>
+            <div>Fecha: @Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</div>
+            <div>Cliente: @(Model.Cliente?.Nombre ?? "General")</div>
+            <div>Método: @Model.MetodoPago</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="description">PRODUCTO</th>
+                    <th class="quantity">CANT</th>
+                    <th class="price">PRECIO</th>
+                    <th class="amount">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in Model.DetallesVentas)
+                {
+                    <tr>
+                        <td class="description">@detalle.Producto.Nombre</td>
+                        <td class="quantity">@detalle.Cantidad</td>
+                        <td class="price">$@string.Format("{0:N0}", detalle.PrecioUnitario)</td>
+                        <td class="amount">$@string.Format("{0:N0}", detalle.Cantidad * detalle.PrecioUnitario)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <div class="total-section">
+            <div>Subtotal: $@string.Format("{0:N0}", Model.Subtotal)</div>
+            @if (Model.Impuestos.HasValue && Model.Impuestos.Value > 0)
+            {
+                <div>Impuestos: $@string.Format("{0:N0}", Model.Impuestos)</div>
+            }
+            @if (Model.Descuento.HasValue && Model.Descuento.Value > 0)
+            {
+                <div>Descuento: -$@string.Format("{0:N0}", Model.Descuento)</div>
+            }
+            <div class="grand-total">TOTAL: $@string.Format("{0:N0}", Model.Total)</div>
+        </div>
+    </div>
+
+    <div class="button-container no-print">
+        <button class="print-button" onclick="window.print()">Imprimir</button>
+        <button class="close-button" onclick="window.close()">Cerrar</button>
+    </div>
+
+    <script>
+        // Imprimir automáticamente cuando se carga la página
+        window.onload = function() {
+            // Pequeño retraso para asegurar que todo se cargue correctamente
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html> 

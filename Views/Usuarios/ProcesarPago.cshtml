@@ -1,0 +1,98 @@
+@model VentaPOS.Models.Suscripciones
+
+@{
+    ViewData["Title"] = "Procesar Pago";
+    var datosBancarios = ViewBag.DatosBancarios;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Proceso de Pago - @Model.Plan.Nombre</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Detalles del Plan</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Plan:</strong> @Model.Plan.Nombre</li>
+                                <li><strong>Precio:</strong> $@Model.Plan.Precio?.ToString("N0")</li>
+                                <li><strong>Usuarios máximos:</strong> @Model.Plan.MaxUsuarios</li>
+                                <li><strong>Duración:</strong> 30 días</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Datos de Transferencia</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Banco:</strong> @datosBancarios.Banco</li>
+                                <li><strong>Tipo de Cuenta:</strong> @datosBancarios.TipoCuenta</li>
+                                <li><strong>N° de Cuenta:</strong> @datosBancarios.NumeroCuenta</li>
+                                <li><strong>Titular:</strong> @datosBancarios.Titular</li>
+                                <li><strong>RUT:</strong> @datosBancarios.Rut</li>
+                                <li><strong>Email:</strong> @datosBancarios.Email</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Por favor, realice la transferencia por el monto exacto y luego ingrese el número de comprobante para activar su suscripción.
+                    </div>
+
+                    <form asp-action="ConfirmarPago" method="post" class="mt-4">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="suscripcionId" value="@Model.SuscripcionID" />
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Número de Comprobante de Transferencia</label>
+                            <input type="text" name="numeroComprobante" class="form-control" required 
+                                   placeholder="Ingrese el número de comprobante de su transferencia" />
+                            <div class="form-text">
+                                Este número lo encuentra en el comprobante de su transferencia bancaria.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Confirmar Pago
+                            </button>
+                            <a href="@Url.Action("SolicitarPlan")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Volver a Planes
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="mt-4">
+                        <h5 class="mb-3">¿Necesitas ayuda?</h5>
+                        <p class="mb-2">Si tienes dudas sobre el proceso de pago, puedes contactarnos:</p>
+                        <ul class="list-unstyled">
+                            <li>
+                                <i class="bi bi-envelope me-2"></i>
+                                <a href="mailto:contacto@sibb.cl">contacto@sibb.cl</a>
+                            </li>
+                            <li>
+                                <i class="bi bi-whatsapp me-2"></i>
+                                <a href="https://wa.me/56912345678" target="_blank">+56 9 1234 5678</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (TempData["Error"] != null)
+    {
+        <script>
+            $(document).ready(function() {
+                alert('@TempData["Error"]');
+            });
+        </script>
+    }
+} 

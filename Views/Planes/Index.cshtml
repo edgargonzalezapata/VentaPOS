@@ -1,0 +1,205 @@
+@{
+    ViewData["Title"] = "Nuestros Planes";
+}
+
+@section Styles {
+    <style>
+        /* Redefinir algunos estilos para trabajar bien con Tailwind */
+        .btn-plan {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 300ms;
+            font-weight: 500;
+            text-align: center;
+            display: block;
+            width: 100%;
+        }
+        .btn-outline-plan {
+            border: 2px solid #3b82f6;
+            color: #2563eb;
+        }
+        .btn-outline-plan:hover {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary-plan {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary-plan:hover {
+            background-color: #1d4ed8;
+        }
+        
+        /* Animaciones para tarjetas */
+        .plan-card {
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.6s ease-out, opacity 0.6s ease-out, box-shadow 0.3s ease;
+        }
+        .plan-card.animate-in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .plan-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .recommendation-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @* Keyframes para animaciones *@
+        @@keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+}
+
+<div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-16 px-4 sm:px-6 lg:px-8 rounded-lg shadow-xl mb-10">
+    <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4">¡Bienvenido a VentaPOS!</h2>
+        <p class="text-xl leading-relaxed">
+            Elija el plan perfecto para su negocio y comience a disfrutar de nuestro sistema de punto de venta.
+            Ofrecemos diferentes opciones para adaptarnos a sus necesidades.
+        </p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded shadow-md" role="alert">
+            <div class="flex">
+                <div class="py-1">
+                    <svg class="h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p>@TempData["Mensaje"]</p>
+                </div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-green-50 text-green-500 rounded-lg p-1.5 hover:bg-green-200 inline-flex h-8 w-8" data-bs-dismiss="alert" aria-label="Close">
+                    <span class="sr-only">Cerrar</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    }
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Plan Básico -->
+        <div class="plan-card relative bg-white border border-gray-200 rounded-2xl shadow-lg p-6 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Plan Básico</h2>
+            <div class="text-3xl font-extrabold text-gray-900 mb-1">$30.000</div>
+            <div class="text-sm text-gray-500 mb-6">+ IVA/mes</div>
+            
+            <ul class="space-y-3 mb-8">
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    1 usuario
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Gestión de productos
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Control de inventario
+                </li>
+            </ul>
+            
+            <a asp-controller="Usuarios" asp-action="Registro" asp-route-plan="Basico" class="btn-plan btn-outline-plan">Comenzar</a>
+        </div>
+        
+        <!-- Plan Pro (Recomendado) -->
+        <div class="plan-card recommended relative bg-white border-2 border-blue-500 rounded-2xl shadow-lg p-6 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg recommendation-badge">Recomendado</div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Plan Pro</h2>
+            <div class="text-3xl font-extrabold text-gray-900 mb-1">$50.000</div>
+            <div class="text-sm text-gray-500 mb-6">+ IVA/mes</div>
+            
+            <ul class="space-y-3 mb-8">
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Hasta 4 usuarios
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Todo del Plan Básico
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Programa de fidelización
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Reportes avanzados
+                </li>
+            </ul>
+            
+            <a asp-controller="Usuarios" asp-action="Registro" asp-route-plan="Pro" class="btn-plan btn-primary-plan">Comenzar</a>
+        </div>
+        
+        <!-- Plan Enterprise -->
+        <div class="plan-card relative bg-white border border-gray-200 rounded-2xl shadow-lg p-6 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Plan Enterprise</h2>
+            <div class="text-3xl font-extrabold text-gray-900 mb-1">$90.000</div>
+            <div class="text-sm text-gray-500 mb-6">+ IVA/mes</div>
+            
+            <ul class="space-y-3 mb-8">
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Usuarios ilimitados
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Todo del Plan Pro
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Soporte prioritario
+                </li>
+            </ul>
+            
+            <a asp-controller="Usuarios" asp-action="Registro" asp-route-plan="Enterprise" class="btn-plan btn-outline-plan">Contactar</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Animación básica para las tarjetas de plan
+        document.addEventListener('DOMContentLoaded', function() {
+            const planCards = document.querySelectorAll('.plan-card');
+            planCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate-in');
+                }, 200 * index);
+            });
+        });
+    </script>
+} 

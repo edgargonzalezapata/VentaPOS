@@ -1,0 +1,193 @@
+@model VentaPOS.Models.Venta
+
+<div class="tw-bg-white tw-rounded-lg tw-overflow-hidden">
+    <!-- Información general del pedido -->
+    <div class="tw-p-4 tw-border-b tw-border-gray-200">
+        <div class="tw-grid tw-grid-cols-2 tw-gap-4">
+            <div>
+                <p class="tw-text-sm tw-text-gray-500">Pedido #</p>
+                <p class="tw-text-lg tw-font-semibold">@Model.VentaID</p>
+            </div>
+            <div>
+                <p class="tw-text-sm tw-text-gray-500">Fecha</p>
+                <p class="tw-text-lg tw-font-semibold">@Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+            <div>
+                <p class="tw-text-sm tw-text-gray-500">Estado</p>
+                <p class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-sm tw-font-medium
+                    @(Model.Estado == "Pendiente" ? "tw-bg-yellow-100 tw-text-yellow-800" : 
+                    Model.Estado == "En Preparación" ? "tw-bg-blue-100 tw-text-blue-800" : 
+                    Model.Estado == "Completado" ? "tw-bg-green-100 tw-text-green-800" : 
+                    "tw-bg-red-100 tw-text-red-800")">
+                    @Model.Estado
+                </p>
+            </div>
+            <div>
+                <p class="tw-text-sm tw-text-gray-500">Método de pago</p>
+                <p class="tw-text-lg tw-font-semibold">@Model.MetodoPago</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del cliente -->
+    <div class="tw-p-4 tw-border-b tw-border-gray-200">
+        <h3 class="tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-2">Información del cliente</h3>
+        @if (Model.Cliente != null)
+        {
+            <div class="tw-grid tw-grid-cols-2 tw-gap-4">
+                <div>
+                    <p class="tw-text-sm tw-text-gray-500">Nombre</p>
+                    <p class="tw-text-base tw-font-medium">@Model.Cliente.Nombre @Model.Cliente.Apellidos</p>
+                </div>
+                <div>
+                    <p class="tw-text-sm tw-text-gray-500">Email</p>
+                    <p class="tw-text-base tw-font-medium">@Model.Cliente.Email</p>
+                </div>
+                <div>
+                    <p class="tw-text-sm tw-text-gray-500">Teléfono</p>
+                    <p class="tw-text-base tw-font-medium">@Model.Cliente.Telefono</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="tw-text-base tw-text-gray-500">Cliente no registrado</p>
+        }
+    </div>
+
+    <!-- Productos del pedido -->
+    <div class="tw-p-4 tw-border-b tw-border-gray-200">
+        <h3 class="tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-2">Productos</h3>
+        <div class="tw-overflow-x-auto">
+            <table class="tw-min-w-full tw-divide-y tw-divide-gray-200">
+                <thead class="tw-bg-gray-50">
+                    <tr>
+                        <th scope="col" class="tw-px-4 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Producto</th>
+                        <th scope="col" class="tw-px-4 tw-py-3 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Precio</th>
+                        <th scope="col" class="tw-px-4 tw-py-3 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Cantidad</th>
+                        <th scope="col" class="tw-px-4 tw-py-3 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody class="tw-bg-white tw-divide-y tw-divide-gray-200">
+                    @foreach (var detalle in Model.DetallesVentas)
+                    {
+                        <tr>
+                            <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900">
+                                @detalle.Producto.Nombre
+                            </td>
+                            <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-text-gray-500 tw-text-right">
+                                $@detalle.PrecioUnitario.ToString("N0")
+                            </td>
+                            <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-text-gray-500 tw-text-right">
+                                @detalle.Cantidad
+                            </td>
+                            <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                                $@((detalle.PrecioUnitario * detalle.Cantidad).ToString("N0"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="tw-bg-gray-50">
+                    <tr>
+                        <td colspan="3" class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                            Subtotal:
+                        </td>
+                        <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                            $@Model.Subtotal.ToString("N0")
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                            Impuestos:
+                        </td>
+                        <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                            $@(Model.Impuestos?.ToString("N0") ?? "0")
+                        </td>
+                    </tr>
+                    @if (Model.Descuento.HasValue && Model.Descuento.Value > 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                                Descuento:
+                            </td>
+                            <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-sm tw-font-medium tw-text-gray-900 tw-text-right">
+                                -$@(Model.Descuento?.ToString("N0") ?? "0")
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td colspan="3" class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-base tw-font-bold tw-text-gray-900 tw-text-right">
+                            Total:
+                        </td>
+                        <td class="tw-px-4 tw-py-3 tw-whitespace-nowrap tw-text-base tw-font-bold tw-text-gray-900 tw-text-right">
+                            $@Model.Total.ToString("N0")
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Comentarios -->
+    @if (!string.IsNullOrEmpty(Model.Comentarios))
+    {
+        <div class="tw-p-4 tw-border-b tw-border-gray-200">
+            <h3 class="tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-2">Comentarios</h3>
+            <p class="tw-text-base tw-text-gray-700">@Model.Comentarios</p>
+        </div>
+    }
+
+    <!-- Botones de acción -->
+    <div class="tw-p-4 tw-flex tw-justify-end tw-space-x-3">
+        <button type="button" 
+                class="tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-text-sm tw-font-medium tw-text-gray-700 tw-bg-white hover:tw-bg-gray-50"
+                onclick="cerrarModal()">
+            Cerrar
+        </button>
+        <button type="button" 
+                class="tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-border tw-border-transparent tw-rounded-md tw-shadow-sm tw-text-sm tw-font-medium tw-text-white tw-bg-blue-600 hover:tw-bg-blue-700"
+                onclick="imprimirPedido(@Model.VentaID)">
+            <svg class="tw-mr-2 tw-h-4 tw-w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Imprimir
+        </button>
+    </div>
+</div>
+
+<script>
+    // Función para imprimir el pedido
+    function imprimirPedido(pedidoId) {
+        // Crear una nueva ventana para imprimir
+        var printWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        // Obtener los datos del pedido del DOM actual
+        var pedidoInfo = document.querySelector('#detallesPedidoContenido').cloneNode(true);
+        
+        // Crear el contenido HTML para la impresión
+        var htmlContent = '<!DOCTYPE html>' +
+            '<html>' +
+            '<head>' +
+            '<title>Pedido #' + pedidoId + '</title>' +
+            '<link rel="stylesheet" href="/css/print.css">' +
+            '</head>' +
+            '<body>' +
+            '<div class="header">' +
+            '<h1>Comprobante de Pedido</h1>' +
+            '<p>Pedido #' + pedidoId + '</p>' +
+            '</div>' +
+            pedidoInfo.innerHTML +
+            '<div class="print-buttons">' +
+            '<button class="print-button" onclick="window.print();">Imprimir</button>' +
+            '<button class="close-button" onclick="window.close();">Cerrar</button>' +
+            '</div>' +
+            '</body>' +
+            '</html>';
+        
+        printWindow.document.write(htmlContent);
+        
+        // Finalizar la escritura y enfocar la ventana
+        printWindow.document.close();
+        printWindow.focus();
+    }
+</script> 

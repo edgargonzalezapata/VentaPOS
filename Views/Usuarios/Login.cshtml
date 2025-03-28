@@ -1,0 +1,482 @@
+@model VentaPOS.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es" class="tw-h-full">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VentaPOS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0061f2 0%, #6610f2 100%);
+            background-image: 
+                radial-gradient(at 50% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 75%),
+                radial-gradient(at 100% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #0061f2 0%, #6610f2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(255,255,255,0.05)' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.5;
+            animation: animateBackground 60s linear infinite;
+        }
+
+        @@keyframes animateBackground {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 100% 100%;
+            }
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #4a6cf7 0%, #6610f2 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: rotateGradient 10s linear infinite;
+        }
+
+        @@keyframes rotateGradient {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .login-header h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: inherit;
+            filter: blur(10px);
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            height: auto;
+        }
+        
+        .form-control:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+        }
+        
+        .btn-login {
+            background: linear-gradient(to right, #4a6cf7, #6610f2);
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            background: linear-gradient(to right, #3a5ce6, #5a0de1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem 0 0 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-right: none;
+            padding: 0.75rem;
+        }
+        
+        .type-selector {
+            display: flex;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        .type-option {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .type-option.active {
+            color: white;
+        }
+        
+        .type-option.active::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #4a6cf7, #6610f2);
+            z-index: -1;
+        }
+        
+        .type-option:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+
+        .form-floating {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-floating .input-group {
+            flex-wrap: nowrap;
+        }
+        
+        .form-floating input {
+            height: 56px;
+            padding-top: 1.625rem !important;
+            padding-bottom: 0.625rem !important;
+            line-height: 1.25;
+        }
+        
+        .form-floating label {
+            position: absolute;
+            top: 50%;
+            left: 46px;
+            transform: translateY(-50%);
+            padding: 0 0.75rem;
+            pointer-events: none;
+            transition: all 0.2s ease-out;
+            color: #718096;
+            z-index: 3;
+            margin: 0;
+            background: transparent;
+            mix-blend-mode: multiply;
+        }
+        
+        .form-floating .input-group:focus-within ~ label,
+        .form-floating input:not(:placeholder-shown) ~ label {
+            top: -0.5rem;
+            left: 46px;
+            transform: scale(0.85);
+            background-color: white;
+            padding: 0 0.5rem;
+            color: #4a6cf7;
+            mix-blend-mode: normal;
+        }
+        
+        .form-floating .input-group-text {
+            height: 56px;
+        }
+
+        .toggle-password-btn {
+            border-color: #e2e8f0;
+            border-left: none;
+            border-top-right-radius: 0.5rem !important;
+            border-bottom-right-radius: 0.5rem !important;
+            background-color: #f8f9fa;
+        }
+        
+        .toggle-password-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .login-container {
+            animation: fadeIn 0.5s ease-in;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo">
+                <i class="bi bi-shop"></i>
+            </div>
+            <h1>VentaPOS</h1>
+            <p>Bienvenido al sistema de ventas</p>
+                </div>
+        
+        <div class="p-4 p-md-5">
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["MensajeExito"] != null)
+                    {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            @TempData["MensajeExito"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+            
+            <div class="type-selector mb-4">
+                <label class="type-option" id="empleadoOption">
+                    <input class="visually-hidden" type="radio" id="tipoEmpleado" asp-for="TipoUsuario" value="Empleado" checked />
+                    <i class="bi bi-person-fill me-2"></i> Empleado
+                </label>
+                <label class="type-option" id="empresaOption">
+                    <input class="visually-hidden" type="radio" id="tipoEmpresa" asp-for="TipoUsuario" value="Empresa" />
+                    <i class="bi bi-building me-2"></i> Empresa
+                </label>
+            </div>
+
+                    <form asp-action="Login" method="post" class="needs-validation" novalidate onsubmit="return limpiarRUTAntesDeSometer(this)">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                <div class="form-group mb-3">
+                    <label id="labelCorreo" for="inputCorreo">Correo Electrónico</label>
+                            <div class="input-group">
+                        <span class="input-group-text">
+                                    <i id="iconoCorreo" class="bi bi-envelope-fill text-primary"></i>
+                                </span>
+                        <input asp-for="Correo" type="email" class="form-control" id="inputCorreo" autocomplete="off">
+                            </div>
+                    <span asp-validation-for="Correo" class="text-danger mt-1 d-block"></span>
+                        </div>
+                        
+                <div class="form-group mb-3">
+                    <label for="Password">Contraseña</label>
+                            <div class="input-group">
+                        <span class="input-group-text">
+                                    <i class="bi bi-lock-fill text-primary"></i>
+                                </span>
+                        <input asp-for="Password" type="password" class="form-control" id="Password">
+                        <button class="btn toggle-password-btn" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                    <span asp-validation-for="Password" class="text-danger mt-1 d-block"></span>
+                        </div>
+                        
+                <div class="form-group form-check mb-4">
+                    <input asp-for="RememberMe" type="checkbox" class="form-check-input" id="RememberMe">
+                    <label class="form-check-label" for="RememberMe">Recordarme</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary btn-login">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p>¿No tienes cuenta? <a asp-action="Registro" class="text-decoration-none fw-bold">Regístrate aquí</a></p>
+                            <p class="mt-2">
+                                <a asp-action="OlvideContrasena" class="text-decoration-none">¿Olvidaste tu contraseña?</a>
+                            </p>
+                        </div>
+                    </form>
+            
+            <div class="mt-4 text-center">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-light">
+                            <i class="bi bi-arrow-left me-2"></i> Volver al inicio
+                        </a>
+        </div>
+    </div>
+</div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para limpiar RUT de puntos solamente
+        function limpiarRUT(rut) {
+            return rut.toString().replace(/\./g, '');
+        }
+
+        // Función para limpiar RUT antes de someter el formulario
+        function limpiarRUTAntesDeSometer(form) {
+            const tipoEmpresa = document.getElementById('tipoEmpresa');
+            const inputCorreo = document.getElementById('inputCorreo');
+            
+            if (tipoEmpresa.checked) {
+                // Solo quitar los puntos, mantener el guion
+                inputCorreo.value = limpiarRUT(inputCorreo.value);
+            }
+            return true;
+        }
+
+        // Selección de tipo de usuario
+        const empleadoOption = document.getElementById('empleadoOption');
+        const empresaOption = document.getElementById('empresaOption');
+        const tipoEmpleado = document.getElementById('tipoEmpleado');
+        const tipoEmpresa = document.getElementById('tipoEmpresa');
+
+        // Función para actualizar estilos de selección
+        function updateTypeSelection() {
+            if (tipoEmpleado.checked) {
+                empleadoOption.classList.add('active');
+                empresaOption.classList.remove('active');
+            } else {
+                empleadoOption.classList.remove('active');
+                empresaOption.classList.add('active');
+            }
+        }
+
+        // Función para cambiar el tipo de entrada
+        function cambiarTipoEntrada() {
+            const labelCorreo = document.getElementById('labelCorreo');
+            const inputCorreo = document.getElementById('inputCorreo');
+            const iconoCorreo = document.getElementById('iconoCorreo');
+            
+            updateTypeSelection();
+
+            if (tipoEmpresa.checked) {
+                labelCorreo.textContent = 'RUT';
+                inputCorreo.placeholder = ' ';
+                iconoCorreo.classList.remove('bi-envelope-fill');
+                iconoCorreo.classList.add('bi-building');
+                
+                // Solo permitir números, k/K y guion
+                inputCorreo.addEventListener('input', function(e) {
+                    let valor = e.target.value;
+                    if (valor.length > 0) {
+                        valor = valor.replace(/[^\dkK-]/g, '');
+                        e.target.value = valor;
+                    }
+                });
+            } else {
+                labelCorreo.textContent = 'Correo Electrónico';
+                inputCorreo.placeholder = ' ';
+                iconoCorreo.classList.remove('bi-building');
+                iconoCorreo.classList.add('bi-envelope-fill');
+                
+                inputCorreo.value = '';
+                // Eliminar el event listener anterior
+                const oldInput = inputCorreo.cloneNode(true);
+                inputCorreo.parentNode.replaceChild(oldInput, inputCorreo);
+                document.getElementById('inputCorreo').focus();
+            }
+        }
+
+        // Agregar event listeners
+        tipoEmpresa.addEventListener('change', cambiarTipoEntrada);
+        tipoEmpleado.addEventListener('change', cambiarTipoEntrada);
+        
+        // Evento para los contenedores
+        empleadoOption.addEventListener('click', function() {
+            tipoEmpleado.checked = true;
+            cambiarTipoEntrada();
+        });
+        
+        empresaOption.addEventListener('click', function() {
+            tipoEmpresa.checked = true;
+            cambiarTipoEntrada();
+        });
+
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.querySelector('input[type="password"]');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+
+        // Ejecutar al cargar la página para establecer el estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+        cambiarTipoEntrada();
+        });
+    </script>
+</body>
+</html> 

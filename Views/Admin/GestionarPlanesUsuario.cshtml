@@ -1,0 +1,290 @@
+@model VentaPOS.Models.Usuario
+
+@{
+    ViewData["Title"] = "Gestionar Planes de Usuario";
+    var planes = ViewBag.Planes as List<VentaPOS.Models.Planes>;
+    var suscripcionesAdmin = ViewBag.SuscripcionesAdmin as List<VentaPOS.Models.Suscripciones>;
+    var suscripcionesMiembro = ViewBag.SuscripcionesMiembro as List<VentaPOS.Models.Suscripciones>;
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="card-title">Gestionar Planes de Usuario</h1>
+                <div>
+                    <a asp-action="CambiarPlanUsuario" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Volver a Búsqueda
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-house"></i> Panel
+                    </a>
+                </div>
+            </div>
+            <p class="card-text">Administra los planes y suscripciones del usuario seleccionado.</p>
+        </div>
+    </div>
+    
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Información del Usuario</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">ID</label>
+                        <input type="text" class="form-control" value="@Model.UsuarioId" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Nombre</label>
+                        <input type="text" class="form-control" value="@Model.Nombre" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Correo Electrónico</label>
+                        <input type="text" class="form-control" value="@Model.Correo" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Teléfono</label>
+                        <input type="text" class="form-control" value="@Model.Telefono" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Estado</label>
+                        @if (Model.Activo == true)
+                        {
+                            <span class="badge bg-success w-100 p-2">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary w-100 p-2">Inactivo</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Suscripciones Administradas</h5>
+                </div>
+                <div class="card-body">
+                    @if (suscripcionesAdmin != null && suscripcionesAdmin.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Plan</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var suscripcion in suscripcionesAdmin)
+                                    {
+                                        <tr>
+                                            <td>@suscripcion.Plan.Nombre</td>
+                                            <td>@suscripcion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@suscripcion.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (suscripcion.Activa == true)
+                                                {
+                                                    <span class="badge bg-success">Activa</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactiva</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-cambiar-plan-@suscripcion.SuscripcionID">
+                                                        <i class="bi bi-arrow-repeat"></i> Cambiar Plan
+                                                    </button>
+                                                    
+                                                    @if (suscripcion.Activa == true)
+                                                    {
+                                                        <form asp-action="DesactivarSuscripcion" method="post" onsubmit="return confirm('¿Estás seguro de desactivar esta suscripción?');">
+                                                            <input type="hidden" name="usuarioId" value="@Model.UsuarioId" />
+                                                            <input type="hidden" name="suscripcionId" value="@suscripcion.SuscripcionID" />
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-x-circle"></i> Desactivar
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                                
+                                                <!-- Modal para cambiar plan -->
+                                                <div class="modal fade" id="modal-cambiar-plan-@suscripcion.SuscripcionID" tabindex="-1" aria-labelledby="modalLabel-@suscripcion.SuscripcionID" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="modalLabel-@suscripcion.SuscripcionID">Cambiar Plan</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <form asp-action="CambiarPlanAdministrado" method="post">
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="usuarioId" value="@Model.UsuarioId" />
+                                                                    <input type="hidden" name="suscripcionId" value="@suscripcion.SuscripcionID" />
+                                                                    
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Plan Actual</label>
+                                                                        <input type="text" class="form-control" value="@suscripcion.Plan.Nombre" readonly />
+                                                                    </div>
+                                                                    
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Nuevo Plan</label>
+                                                                        <select name="nuevoPlanId" class="form-select">
+                                                                            @foreach (var plan in planes)
+                                                                            {
+                                                                                @if (plan.PlanID == suscripcion.PlanID)
+                                                                                {
+                                                                                    <option value="@plan.PlanID" selected>
+                                                                                        @plan.Nombre (@(plan.MaxUsuarios.HasValue ? plan.MaxUsuarios.Value : 0) usuarios)
+                                                                                    </option>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <option value="@plan.PlanID">
+                                                                                        @plan.Nombre (@(plan.MaxUsuarios.HasValue ? plan.MaxUsuarios.Value : 0) usuarios)
+                                                                                    </option>
+                                                                                }
+                                                                            }
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> Este usuario no administra ninguna suscripción.
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Suscripciones Como Miembro</h5>
+                </div>
+                <div class="card-body">
+                    @if (suscripcionesMiembro != null && suscripcionesMiembro.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Plan</th>
+                                        <th>Administrador</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var suscripcion in suscripcionesMiembro)
+                                    {
+                                        <tr>
+                                            <td>@suscripcion.Plan.Nombre</td>
+                                            <td>@suscripcion.Empresa.NombreEmpresa</td>
+                                            <td>@suscripcion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@suscripcion.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (suscripcion.Activa == true)
+                                                {
+                                                    <span class="badge bg-success">Activa</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactiva</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> Este usuario no es miembro de ninguna suscripción externa.
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">Asignar Nuevo Plan</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AsignarPlanUsuario" method="post">
+                        <input type="hidden" name="usuarioId" value="@Model.UsuarioId" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Plan</label>
+                            <select name="planId" class="form-select">
+                                @foreach (var plan in planes)
+                                {
+                                    <option value="@plan.PlanID">
+                                        @plan.Nombre (@(plan.MaxUsuarios.HasValue ? plan.MaxUsuarios.Value : 0) usuarios)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Asignar un nuevo plan creará una nueva suscripción donde este usuario será el administrador.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-plus-circle"></i> Asignar Nuevo Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+} 

@@ -1,0 +1,94 @@
+@model VentaPOS.Models.Venta
+
+<div class="tw-space-y-4">
+    <div class="tw-grid tw-grid-cols-2 tw-gap-4">
+        <div>
+            <p class="tw-text-sm tw-font-medium tw-text-gray-500">Número de Venta</p>
+            <p class="tw-text-sm tw-text-gray-900">#@Model.VentaID</p>
+        </div>
+        <div>
+            <p class="tw-text-sm tw-font-medium tw-text-gray-500">Fecha</p>
+            <p class="tw-text-sm tw-text-gray-900">@Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <div>
+            <p class="tw-text-sm tw-font-medium tw-text-gray-500">Cliente</p>
+            <p class="tw-text-sm tw-text-gray-900">@(Model.Cliente?.Nombre ?? "Cliente General")</p>
+        </div>
+        <div>
+            <p class="tw-text-sm tw-font-medium tw-text-gray-500">Método de Pago</p>
+            <p class="tw-text-sm tw-text-gray-900">@Model.MetodoPago</p>
+        </div>
+    </div>
+
+    <div class="tw-mt-6">
+        <h4 class="tw-text-sm tw-font-medium tw-text-gray-900">Productos</h4>
+        <div class="tw-mt-2">
+            <table class="tw-min-w-full tw-divide-y tw-divide-gray-200">
+                <thead class="tw-bg-gray-50">
+                    <tr>
+                        <th scope="col" class="tw-px-3 tw-py-2 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase">Producto</th>
+                        <th scope="col" class="tw-px-3 tw-py-2 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase">Cantidad</th>
+                        <th scope="col" class="tw-px-3 tw-py-2 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase">Precio Unit.</th>
+                        <th scope="col" class="tw-px-3 tw-py-2 tw-text-right tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody class="tw-bg-white tw-divide-y tw-divide-gray-200">
+                    @foreach (var detalle in Model.DetallesVentas)
+                    {
+                        <tr>
+                            <td class="tw-px-3 tw-py-2 tw-text-sm tw-text-gray-900">@detalle.Producto.Nombre</td>
+                            <td class="tw-px-3 tw-py-2 tw-text-sm tw-text-gray-900 tw-text-right">@detalle.Cantidad</td>
+                            <td class="tw-px-3 tw-py-2 tw-text-sm tw-text-gray-900 tw-text-right">$@string.Format("{0:N0}", detalle.PrecioUnitario)</td>
+                            <td class="tw-px-3 tw-py-2 tw-text-sm tw-text-gray-900 tw-text-right">$@string.Format("{0:N0}", detalle.Cantidad * detalle.PrecioUnitario)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tw-mt-6 tw-border-t tw-border-gray-200 tw-pt-4">
+        <div class="tw-flex tw-justify-between tw-text-sm">
+            <span class="tw-font-medium tw-text-gray-500">Subtotal</span>
+            <span class="tw-text-gray-900">$@string.Format("{0:N0}", Model.Subtotal)</span>
+        </div>
+        @if (Model.Impuestos.HasValue && Model.Impuestos.Value > 0)
+        {
+            <div class="tw-flex tw-justify-between tw-text-sm">
+                <span class="tw-font-medium tw-text-gray-500">Impuestos</span>
+                <span class="tw-text-gray-900">$@string.Format("{0:N0}", Model.Impuestos)</span>
+            </div>
+        }
+        @if (Model.Descuento.HasValue && Model.Descuento.Value > 0)
+        {
+            <div class="tw-flex tw-justify-between tw-text-sm">
+                <span class="tw-font-medium tw-text-gray-500">Descuento</span>
+                <span class="tw-text-gray-900">-$@string.Format("{0:N0}", Model.Descuento)</span>
+            </div>
+        }
+        <div class="tw-flex tw-justify-between tw-text-sm tw-font-medium tw-mt-2 tw-pt-2 tw-border-t tw-border-gray-200">
+            <span class="tw-text-gray-900">Total</span>
+            <span class="tw-text-gray-900">$@string.Format("{0:N0}", Model.Total)</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Comentarios))
+    {
+        <div class="tw-mt-6 tw-border-t tw-border-gray-200 tw-pt-4">
+            <p class="tw-text-sm tw-font-medium tw-text-gray-500">Comentarios</p>
+            <p class="tw-text-sm tw-text-gray-900 tw-mt-1">@Model.Comentarios</p>
+        </div>
+    }
+    
+    <!-- Botón de Impresión -->
+    <div class="tw-mt-6 tw-pt-4 tw-flex tw-justify-end">
+        <button type="button" 
+                onclick="imprimirVenta(@Model.VentaID)" 
+                class="tw-inline-flex tw-items-center tw-px-4 tw-py-2 tw-border tw-border-transparent tw-rounded-md tw-shadow-sm tw-text-sm tw-font-medium tw-text-white tw-bg-blue-600 hover:tw-bg-blue-700">
+            <svg class="tw-mr-2 tw-h-4 tw-w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Imprimir
+        </button>
+    </div>
+</div> 

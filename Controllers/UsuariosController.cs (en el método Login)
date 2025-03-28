@@ -1,0 +1,17 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+namespace Controllers
+{
+    public class UsuariosController : Controller
+    {
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            // Después de validar el usuario...
+            HttpContext.Session.SetString("RolUsuario", rolUsuario);
+            // ...
+        }
+    }
+} 

@@ -1,0 +1,328 @@
+@model IEnumerable<VentaPOS.Models.Producto>
+@{
+    ViewData["Title"] = "Gestión de Stock";
+    Layout = "~/Views/Shared/_PanelLayout.cshtml";
+}
+
+<div class="tw-py-6 tw-px-6">
+    <div class="tw-max-w-7xl tw-mx-auto">
+        <h2 class="tw-text-2xl tw-font-bold tw-mb-6">Gestión de Stock</h2>
+        
+        <!-- Resumen de Stock -->
+        <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-4 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-4 tw-border-l-4 tw-border-blue-500">
+                <div class="tw-flex tw-items-center">
+                    <div class="tw-p-3 tw-rounded-full tw-bg-blue-100 tw-mr-4">
+                        <svg class="tw-h-6 tw-w-6 tw-text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-600">Total de Productos</p>
+                        <p class="tw-text-lg tw-font-semibold">@ViewBag.TotalProductos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-4 tw-border-l-4 tw-border-green-500">
+                <div class="tw-flex tw-items-center">
+                    <div class="tw-p-3 tw-rounded-full tw-bg-green-100 tw-mr-4">
+                        <svg class="tw-h-6 tw-w-6 tw-text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-600">Productos Disponibles</p>
+                        <p class="tw-text-lg tw-font-semibold">@ViewBag.ProductosDisponibles</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-4 tw-border-l-4 tw-border-red-500">
+                <div class="tw-flex tw-items-center">
+                    <div class="tw-p-3 tw-rounded-full tw-bg-red-100 tw-mr-4">
+                        <svg class="tw-h-6 tw-w-6 tw-text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-600">Productos Agotados</p>
+                        <p class="tw-text-lg tw-font-semibold">@ViewBag.ProductosAgotados</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-4 tw-border-l-4 tw-border-yellow-500">
+                <div class="tw-flex tw-items-center">
+                    <div class="tw-p-3 tw-rounded-full tw-bg-yellow-100 tw-mr-4">
+                        <svg class="tw-h-6 tw-w-6 tw-text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-600">Bajo Stock</p>
+                        <p class="tw-text-lg tw-font-semibold">@ViewBag.ProductosBajoStock</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-6 tw-mb-6">
+            <form method="get" class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-5 tw-gap-4">
+                <div>
+                    <label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Buscar</label>
+                    <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" 
+                           class="tw-form-input tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm"
+                           placeholder="Nombre o código">
+                </div>
+                
+                <div>
+                    <label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Categoría</label>
+                    <select name="categoriaID" class="tw-form-select tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var categoria in ViewBag.Categorias)
+                        {
+                            <option value="@categoria.CategoriaID" selected="@(ViewBag.CategoriaID == categoria.CategoriaID)">
+                                @categoria.Nombre
+                            </option>
+                        }
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Estado del Stock</label>
+                    <select name="stockFilter" class="tw-form-select tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm">
+                        <option value="">Todos</option>
+                        <option value="disponible" selected="@(ViewBag.StockFilter == "disponible")">Disponible</option>
+                        <option value="agotado" selected="@(ViewBag.StockFilter == "agotado")">Agotado</option>
+                        <option value="bajo" selected="@(ViewBag.StockFilter == "bajo")">Bajo stock</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Ordenar por</label>
+                    <select name="ordenarPor" class="tw-form-select tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm">
+                        <option value="nombre_asc" selected="@(ViewBag.OrdenarPor == "nombre_asc")">Nombre (A-Z)</option>
+                        <option value="nombre_desc" selected="@(ViewBag.OrdenarPor == "nombre_desc")">Nombre (Z-A)</option>
+                        <option value="codigo_asc" selected="@(ViewBag.OrdenarPor == "codigo_asc")">Código (asc)</option>
+                        <option value="codigo_desc" selected="@(ViewBag.OrdenarPor == "codigo_desc")">Código (desc)</option>
+                        <option value="stock_asc" selected="@(ViewBag.OrdenarPor == "stock_asc")">Stock (menor a mayor)</option>
+                        <option value="stock_desc" selected="@(ViewBag.OrdenarPor == "stock_desc")">Stock (mayor a menor)</option>
+                    </select>
+                </div>
+                
+                <div class="tw-flex tw-items-end">
+                    <button type="submit" class="tw-w-full tw-bg-blue-600 hover:tw-bg-blue-700 tw-text-white tw-font-medium tw-py-2 tw-px-4 tw-rounded-md">
+                        <i class="bi bi-search tw-mr-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Tabla de Productos -->
+        <div class="tw-bg-white tw-rounded-lg tw-shadow tw-overflow-hidden">
+            <div class="tw-overflow-x-auto">
+                <table class="tw-min-w-full tw-divide-y tw-divide-gray-200">
+                    <thead class="tw-bg-gray-50">
+                        <tr>
+                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Código</th>
+                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Producto</th>
+                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Categoría</th>
+                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Precio</th>
+                            <th class="tw-px-6 tw-py-3 tw-text-center tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Stock Actual</th>
+                            <th class="tw-px-6 tw-py-3 tw-text-center tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Ajustar Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tw-bg-white tw-divide-y tw-divide-gray-200">
+                        @if (Model.Any())
+                        {
+                            foreach (var producto in Model)
+                            {
+                                <tr>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-text-sm tw-text-gray-500">
+                                        @producto.Codigo
+                                    </td>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap">
+                                        <div class="tw-text-sm tw-font-medium tw-text-gray-900">@producto.Nombre</div>
+                                        <div class="tw-text-sm tw-text-gray-500">@producto.Descripcion</div>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-text-sm tw-text-gray-500">
+                                        @producto.Categoria?.Nombre
+                                    </td>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-text-sm tw-text-gray-500">
+                                        $@producto.Precio.ToString("N0")
+                                    </td>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-text-center">
+                                        <span id="stock-@producto.ProductoID" 
+                                              class="tw-px-2 tw-inline-flex tw-text-sm tw-leading-5 tw-font-semibold tw-rounded-full 
+                                                   @(producto.Stock > 0 ? producto.Stock < 10 ? "tw-bg-yellow-100 tw-text-yellow-800" : "tw-bg-green-100 tw-text-green-800" : "tw-bg-red-100 tw-text-red-800")">
+                                            @producto.Stock
+                                        </span>
+                                    </td>
+                                    <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-text-center">
+                                        <div class="tw-flex tw-items-center tw-justify-center tw-space-x-2">
+                                            <button type="button" onclick="ajustarStock(@producto.ProductoID, 'sumar')"
+                                                    class="tw-bg-green-100 hover:tw-bg-green-200 tw-text-green-800 tw-font-medium tw-py-1 tw-px-2 tw-rounded">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                            <button type="button" onclick="ajustarStock(@producto.ProductoID, 'restar')"
+                                                    class="tw-bg-red-100 hover:tw-bg-red-200 tw-text-red-800 tw-font-medium tw-py-1 tw-px-2 tw-rounded">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <button type="button" onclick="mostrarModalAjuste(@producto.ProductoID, '@producto.Nombre', @producto.Stock)"
+                                                    class="tw-bg-blue-100 hover:tw-bg-blue-200 tw-text-blue-800 tw-font-medium tw-py-1 tw-px-2 tw-rounded">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="tw-px-6 tw-py-4 tw-text-center tw-text-gray-500">
+                                    No se encontraron productos con los filtros seleccionados.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ajuste de stock -->
+<div class="modal fade" id="ajusteStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajustar Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Producto: <strong id="nombreProductoModal"></strong></p>
+                <p>Stock actual: <span id="stockActualModal" class="badge bg-secondary"></span></p>
+                
+                <div class="mb-3">
+                    <label for="cantidadAjuste" class="form-label">Nueva cantidad:</label>
+                    <input type="number" class="form-control" id="cantidadAjuste" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarAjusteStock()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let productoIdSeleccionado = 0;
+        
+        function ajustarStock(productoId, tipo) {
+            const cantidad = 1; // Incremento/decremento de a uno
+            
+            fetch('/Stock/AjustarStock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                },
+                body: `productoId=${productoId}&cantidad=${cantidad}&tipo=${tipo}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el stock en la interfaz
+                    const stockElement = document.getElementById(`stock-${productoId}`);
+                    stockElement.textContent = data.nuevoStock;
+                    
+                    // Actualizar la clase según el nuevo stock
+                    stockElement.className = 'tw-px-2 tw-inline-flex tw-text-sm tw-leading-5 tw-font-semibold tw-rounded-full';
+                    if (data.nuevoStock > 0) {
+                        if (data.nuevoStock < 10) {
+                            stockElement.classList.add('tw-bg-yellow-100', 'tw-text-yellow-800');
+                        } else {
+                            stockElement.classList.add('tw-bg-green-100', 'tw-text-green-800');
+                        }
+                    } else {
+                        stockElement.classList.add('tw-bg-red-100', 'tw-text-red-800');
+                    }
+                    
+                    // Mostrar notificación
+                    showNotification('Stock actualizado', `El stock ha sido ${tipo === 'sumar' ? 'incrementado' : 'decrementado'} correctamente.`, 'success');
+                } else {
+                    showNotification('Error', data.message || 'Error al actualizar el stock', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error', 'Error al procesar la solicitud', 'error');
+            });
+        }
+        
+        function mostrarModalAjuste(productoId, nombre, stockActual) {
+            productoIdSeleccionado = productoId;
+            document.getElementById('nombreProductoModal').textContent = nombre;
+            document.getElementById('stockActualModal').textContent = stockActual;
+            document.getElementById('cantidadAjuste').value = stockActual;
+            
+            const modal = new bootstrap.Modal(document.getElementById('ajusteStockModal'));
+            modal.show();
+        }
+        
+        function guardarAjusteStock() {
+            const cantidad = parseInt(document.getElementById('cantidadAjuste').value);
+            
+            if (isNaN(cantidad) || cantidad < 0) {
+                showNotification('Error', 'Por favor ingrese una cantidad válida', 'warning');
+                return;
+            }
+            
+            fetch('/Stock/AjustarStock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                },
+                body: `productoId=${productoIdSeleccionado}&cantidad=${cantidad}&tipo=establecer`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cerrar el modal
+                    bootstrap.Modal.getInstance(document.getElementById('ajusteStockModal')).hide();
+                    
+                    // Actualizar el stock en la interfaz
+                    const stockElement = document.getElementById(`stock-${productoIdSeleccionado}`);
+                    stockElement.textContent = data.nuevoStock;
+                    
+                    // Actualizar la clase según el nuevo stock
+                    stockElement.className = 'tw-px-2 tw-inline-flex tw-text-sm tw-leading-5 tw-font-semibold tw-rounded-full';
+                    if (data.nuevoStock > 0) {
+                        if (data.nuevoStock < 10) {
+                            stockElement.classList.add('tw-bg-yellow-100', 'tw-text-yellow-800');
+                        } else {
+                            stockElement.classList.add('tw-bg-green-100', 'tw-text-green-800');
+                        }
+                    } else {
+                        stockElement.classList.add('tw-bg-red-100', 'tw-text-red-800');
+                    }
+                    
+                    // Mostrar notificación
+                    showNotification('Stock actualizado', 'El stock ha sido actualizado correctamente.', 'success');
+                } else {
+                    showNotification('Error', data.message || 'Error al actualizar el stock', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error', 'Error al procesar la solicitud', 'error');
+            });
+        }
+    </script>
+} 

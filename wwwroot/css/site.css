@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tus estilos personalizados aquí */
+
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* Estilos personalizados para la aplicación */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Estilos para los inputs */
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Estilo para los botones */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  transform: translateY(-2px);
+}
+
+/* Animaciones para los campos del formulario */
+.form-control, .input-group {
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .input-group:focus-within {
+  transform: translateY(-2px);
+}
+
+/* Estilos personalizados adicionales aquí */

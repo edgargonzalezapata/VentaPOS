@@ -1,0 +1,81 @@
+@model VentaPOS.Models.Producto
+
+@{
+    ViewData["Title"] = "Editar Producto";
+    Layout = "_PanelLayout";
+}
+
+<div class="tw-container tw-mx-auto tw-px-6 tw-py-8">
+    <div class="tw-flex tw-justify-between tw-items-center tw-mb-6">
+        <h1 class="tw-text-3xl tw-font-bold tw-text-gray-900">Editar Producto</h1>
+        <a href="@Url.Action("Index")" class="tw-text-blue-600 hover:tw-text-blue-800 tw-flex tw-items-center">
+            <svg class="tw-h-5 tw-w-5 tw-mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a la lista
+        </a>
+    </div>
+
+    <div class="tw-bg-white tw-rounded-lg tw-shadow-md tw-overflow-hidden">
+        <form asp-action="Edit" method="post" class="tw-p-6">
+            <input type="hidden" asp-for="ProductoID" />
+            <div asp-validation-summary="ModelOnly" class="tw-text-red-600 tw-mb-4"></div>
+
+            <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6">
+                <div>
+                    <label asp-for="Codigo" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Código</label>
+                    <input asp-for="Codigo" class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500" />
+                    <span asp-validation-for="Codigo" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Nombre" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Nombre</label>
+                    <input asp-for="Nombre" class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500" />
+                    <span asp-validation-for="Nombre" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="CategoriaID" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Categoría</label>
+                    <select asp-for="CategoriaID" asp-items="ViewBag.CategoriaID" class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500">
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                    <span asp-validation-for="CategoriaID" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Precio" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Precio *</label>
+                    <input asp-for="Precio" 
+                           type="number" 
+                           min="1" 
+                           step="1" 
+                           class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500" 
+                           required />
+                    <span asp-validation-for="Precio" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Stock" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Stock</label>
+                    <input asp-for="Stock" type="number" class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500" />
+                    <span asp-validation-for="Stock" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+
+                <div class="md:tw-col-span-2">
+                    <label asp-for="Descripcion" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">Descripción</label>
+                    <textarea asp-for="Descripcion" rows="3" class="tw-mt-1 tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500"></textarea>
+                    <span asp-validation-for="Descripcion" class="tw-text-red-600 tw-text-sm"></span>
+                </div>
+            </div>
+
+            <div class="tw-mt-6 tw-flex tw-justify-end tw-space-x-3">
+                <a href="@Url.Action("Index")" class="tw-bg-gray-100 tw-text-gray-700 hover:tw-bg-gray-200 tw-px-4 tw-py-2 tw-rounded-md">Cancelar</a>
+                <button type="submit" class="tw-bg-blue-600 tw-text-white hover:tw-bg-blue-700 tw-px-4 tw-py-2 tw-rounded-md">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

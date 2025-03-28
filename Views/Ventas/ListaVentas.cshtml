@@ -1,0 +1,821 @@
+@model IEnumerable<VentaPOS.Models.Venta>
+@{
+    ViewData["Title"] = "Lista de Ventas";
+    Layout = "_PanelLayout";
+}
+
+<!-- Token anti-falsificación para solicitudes POST -->
+@Html.AntiForgeryToken()
+
+<div class="container p-4">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2">Lista de Ventas</h1>
+                <p class="lead">Gestiona y visualiza todas las ventas realizadas</p>
+            </div>
+        </div>
+
+        <!-- Resumen de Estados -->
+        <div class="row mb-4" id="resumenEstados">
+            @{
+                var totalCompletadas = Model.Where(v => v.Estado == "Completada").Sum(v => v.Total);
+                var totalPendientes = Model.Where(v => v.Estado == "Pendiente").Sum(v => v.Total);
+                var totalAnuladas = Model.Where(v => v.Estado == "Anulada").Sum(v => v.Total);
+            }
+            
+            <div class="col-md-4 mb-3">
+                <div class="alert alert-success alert-clickable" 
+                     onclick="filtrarPorEstado('Completada')"
+                     style="cursor: pointer; transition: all 0.2s;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="alert-heading mb-0"><i class="bi bi-check-circle me-2"></i>Completadas</h5>
+                        <i class="bi bi-filter-circle"></i>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-success">@Model.Count(v => v.Estado == "Completada") ventas</span>
+                        <span class="fw-bold">$@totalCompletadas.ToString("N0")</span>
+            </div>
+        </div>
+    </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="alert alert-warning alert-clickable" 
+                     onclick="filtrarPorEstado('Pendiente')"
+                     style="cursor: pointer; transition: all 0.2s;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="alert-heading mb-0"><i class="bi bi-clock-history me-2"></i>Pendientes</h5>
+                        <i class="bi bi-filter-circle"></i>
+                                </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-warning text-dark">@Model.Count(v => v.Estado == "Pendiente") ventas</span>
+                        <span class="fw-bold">$@totalPendientes.ToString("N0")</span>
+                                </div>
+                            </div>
+                        </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="alert alert-danger alert-clickable" 
+                     onclick="filtrarPorEstado('Anulada')"
+                     style="cursor: pointer; transition: all 0.2s;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="alert-heading mb-0"><i class="bi bi-x-circle me-2"></i>Anuladas</h5>
+                        <i class="bi bi-filter-circle"></i>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-danger">@Model.Count(v => v.Estado == "Anulada") ventas</span>
+                        <span class="fw-bold">$@totalAnuladas.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" id="searchInput" 
+                               class="form-control" 
+                               placeholder="Buscar venta...">
+                    </div>
+                    <div class="col-md-4">
+                        <select id="dateFilter" class="form-select">
+                            <option value="">Todas las fechas</option>
+                            <option value="today">Hoy</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">Todos los estados</option>
+                            <option value="Completada">Completada</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Anulada">Anulada</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Ventas -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                    @foreach (var venta in Model)
+                    {
+                        <tr>
+                                <td>@venta.VentaID</td>
+                                <td>@(venta.Cliente?.Nombre ?? "Cliente General")</td>
+                                <td>@venta.FechaVenta.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>$@venta.Total.ToString("N0")</td>
+                                <td>
+                                @if (venta.Estado == "Anulada")
+                                {
+                                        <span class="badge bg-danger">Anulada</span>
+                                }
+                                else if (venta.Estado == "Pendiente")
+                                {
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                }
+                                else
+                                {
+                                        <span class="badge bg-success">Completada</span>
+                                }
+                            </td>
+                                <td class="text-end">
+                                    <button onclick="mostrarDetalles(@venta.VentaID)" 
+                                            class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                    <button onclick="imprimirVenta(@venta.VentaID)" 
+                                            class="btn btn-sm btn-outline-secondary me-2">
+                                        <i class="bi bi-printer"></i>
+                                    </button>
+                                    @if (venta.Estado == "Pendiente")
+                                    {
+                                        <button onclick="confirmarPago(@venta.VentaID)" 
+                                                class="btn btn-sm btn-outline-success me-2">
+                                            <i class="bi bi-credit-card"></i>
+                                        </button>
+                                    }
+                                    <button onclick="confirmarAnulacion(@venta.VentaID)" 
+                                            class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+</div>
+
+<!-- Contenedor para notificaciones Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index: 11"></div>
+
+<!-- Modales -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalles Completo de la Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallesVentaContent">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-person-circle me-2"></i>Información del Cliente</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Nombre:</dt>
+                                    <dd class="col-sm-8" id="clienteNombre">-</dd>
+                                    
+                                    <dt class="col-sm-4">Contacto:</dt>
+                                    <dd class="col-sm-8" id="clienteContacto">-</dd>
+                                    
+                                    <dt class="col-sm-4">Documento:</dt>
+                                    <dd class="col-sm-8" id="clienteDocumento">-</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Datos de la Venta</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">N° Venta:</dt>
+                                    <dd class="col-sm-8" id="ventaId">-</dd>
+                                    
+                                    <dt class="col-sm-4">Fecha:</dt>
+                                    <dd class="col-sm-8" id="ventaFecha">-</dd>
+                                    
+                                    <dt class="col-sm-4">Estado:</dt>
+                                    <dd class="col-sm-8" id="ventaEstado">-</dd>
+                                    
+                                    <dt class="col-sm-4">Total:</dt>
+                                    <dd class="col-sm-8 fw-bold text-success" id="ventaTotal">-</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>Productos Vendidos</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-end">P. Unitario</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detallesProductos">
+                                    <!-- Filas dinámicas -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="anularModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Anulación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea anular esta venta? Esta acción no se puede deshacer.</p>
+                <div id="resumenVentaContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="anularVenta(ventaIdAnular)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Pago -->
+<div class="modal fade" id="pagarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Confirmar Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea marcar esta venta como pagada? El estado cambiará a "Completada".</p>
+                <div id="resumenVentaPago"></div>
+                
+                <!-- Selección de Medio de Pago -->
+                <div class="form-group mt-3">
+                    <label for="medioPago" class="form-label"><strong>Medio de Pago:</strong></label>
+                    <select class="form-select" id="medioPago" required>
+                        <option value="">Seleccione medio de pago</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Débito">Débito</option>
+                        <option value="Crédito">Crédito</option>
+                    </select>
+                </div>
+                
+                <!-- Sección de propina -->
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="incluirPropina">
+                    <label class="form-check-label" for="incluirPropina">
+                        Incluir propina sugerida (10%)
+                    </label>
+                </div>
+                <div id="propinaInfo" class="alert alert-info mt-2" style="display: none;">
+                    <div class="d-flex justify-content-between">
+                        <span>Propina (10%):</span>
+                        <span id="propinaAmount">$0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <strong>Total con propina:</strong>
+                        <strong id="totalConPropina">$0</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="completarVenta(ventaIdPagar)">Confirmar Pago</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let ventaIdAnular = null;
+        let ventaIdPagar = null;
+        let ventaTotal = 0;
+        
+        function mostrarDetalles(ventaId) {
+            $('#detallesModal').modal('show');
+            
+            fetch(`/Ventas/Print/${ventaId}`)
+                .then(response => response.text())
+                .then(html => {
+                    // Crear un contenedor temporal
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    // Extraer datos del HTML de impresión usando los selectores correctos
+                    const clienteNombre = tempDiv.querySelector('.info-item:nth-child(1)')?.textContent.split(':')[1]?.trim() || 'Cliente General';
+                    const metodoPago = tempDiv.querySelector('.info-item:nth-child(2)')?.textContent.split(':')[1]?.trim() || '-';
+                    const fechaVenta = tempDiv.querySelector('.header p:nth-child(3)')?.textContent.split(':')[1]?.trim() || '';
+                    const totalTexto = tempDiv.querySelector('.grand-total')?.textContent || '';
+                    const total = parseFloat(totalTexto.replace(/[^0-9]/g, '')) || 0;
+                    
+                    // Extraer productos de la tabla
+                    const productosRows = Array.from(tempDiv.querySelectorAll('table tbody tr'));
+                    const productos = productosRows.map(row => {
+                        const nombre = row.querySelector('.description')?.textContent.trim() || 'Producto no disponible';
+                        const cantidad = parseInt(row.querySelector('.quantity')?.textContent.trim() || 0);
+                        const precioTexto = row.querySelector('.price')?.textContent.trim() || '0';
+                        const subtotalTexto = row.querySelector('.amount')?.textContent.trim() || '0';
+                        
+                        // Convertir los valores de texto a números eliminando símbolos no numéricos
+                        const precioUnitario = parseFloat(precioTexto.replace(/[^0-9]/g, '')) || 0;
+                        const subtotal = parseFloat(subtotalTexto.replace(/[^0-9]/g, '')) || 0;
+                        
+                        return {
+                            nombre,
+                            cantidad,
+                            precioUnitario,
+                            subtotal
+                        };
+                    });
+                    
+                    // Función para formatear números con separadores de miles
+                    const formatNumber = (num) => {
+                        // Asegurarse de que es un número antes de formatear
+                        if (isNaN(num)) num = 0;
+                        // Usar el formateador nativo con el locale español
+                        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    };
+
+                    // Crear objeto con los datos extraídos
+                    const ventaData = {
+                        ventaId: ventaId,
+                        cliente: {
+                            nombre: clienteNombre,
+                            telefono: 'Sin contacto', // No está disponible en el HTML
+                            documento: 'Sin documento' // No está disponible en el HTML
+                        },
+                        fechaVenta: fechaVenta,
+                        metodoPago: metodoPago,
+                        estado: 'Completada', // Por defecto asumimos completada, se podría obtener de otra forma
+                        total: total,
+                        productos: productos
+                    };
+
+                    // Llenar los datos en el modal
+                    document.getElementById('clienteNombre').textContent = ventaData.cliente.nombre;
+                    document.getElementById('clienteContacto').textContent = ventaData.cliente.telefono;
+                    document.getElementById('clienteDocumento').textContent = ventaData.cliente.documento;
+                    
+                    document.getElementById('ventaId').textContent = ventaData.ventaId;
+                    document.getElementById('ventaFecha').textContent = ventaData.fechaVenta;
+                    document.getElementById('ventaEstado').innerHTML = ventaData.estado === 'Anulada' ? 
+                        '<span class="badge bg-danger">Anulada</span>' : 
+                        '<span class="badge bg-success">Completada</span>';
+                    
+                    // Aplicar el formato correcto con separador de miles
+                    document.getElementById('ventaTotal').textContent = `$${formatNumber(ventaData.total)}`;
+                    
+                    const tbody = document.getElementById('detallesProductos');
+                    tbody.innerHTML = ventaData.productos.map(producto => `
+                        <tr>
+                            <td>${producto.nombre}</td>
+                            <td class="text-center">${producto.cantidad}</td>
+                            <td class="text-end">$${formatNumber(producto.precioUnitario)}</td>
+                            <td class="text-end">$${formatNumber(producto.subtotal)}</td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('detallesVentaContent').innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <h5 class="alert-heading">Error al cargar los detalles</h5>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function confirmarAnulacion(ventaId) {
+            ventaIdAnular = ventaId;
+            $('#anularModal').modal('show');
+        }
+        
+        function anularVenta(ventaId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch(`/Ventas/Anular/${ventaId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    $('#anularModal').modal('hide');
+                    showNotification('Venta Anulada', 'La venta se ha anulado correctamente', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('Error', 'No se pudo anular la venta', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error', 'Hubo un problema al procesar la solicitud', 'danger');
+            });
+        }
+
+        function imprimirVenta(ventaId) {
+            const ventanaImpresion = window.open(`/Ventas/Print/${ventaId}`, '_blank');
+            
+            ventanaImpresion.onload = function() {
+                setTimeout(() => {
+                    ventanaImpresion.print();
+                    ventanaImpresion.onafterprint = function() {
+                        ventanaImpresion.close();
+                    };
+                }, 500);
+            };
+        }
+
+        function confirmarPago(ventaId) {
+            ventaIdPagar = ventaId;
+            // Obtener información básica de la venta para mostrar en el modal
+            const fila = Array.from(document.querySelectorAll('tbody tr')).find(
+                row => row.cells[0].textContent.trim() === ventaId.toString()
+            );
+            
+            if (fila) {
+                const cliente = fila.cells[1].textContent.trim();
+                const fecha = fila.cells[2].textContent.trim();
+                const total = fila.cells[3].textContent.trim();
+                ventaTotal = parseFloat(total.replace(/[^0-9]/g, '')); // Guardar el total sin formato
+                
+                document.getElementById('resumenVentaPago').innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Venta #${ventaId}</strong><br>
+                        Cliente: ${cliente}<br>
+                        Fecha: ${fecha}<br>
+                        Total: ${total}
+                    </div>`;
+                
+                // Resetear los campos del formulario
+                document.getElementById('medioPago').value = '';
+                document.getElementById('incluirPropina').checked = false;
+                document.getElementById('propinaInfo').style.display = 'none';
+            }
+            
+            const pagarModal = new bootstrap.Modal(document.getElementById('pagarModal'));
+            pagarModal.show();
+        }
+
+        // Manejar el cambio en el checkbox de propina
+        document.getElementById('incluirPropina').addEventListener('change', function(e) {
+            const propinaInfo = document.getElementById('propinaInfo');
+            if (this.checked) {
+                const propina = Math.round(ventaTotal * 0.1); // 10% del total
+                const totalConPropina = ventaTotal + propina;
+                
+                document.getElementById('propinaAmount').textContent = `$${propina.toLocaleString('es-ES')}`;
+                document.getElementById('totalConPropina').textContent = `$${totalConPropina.toLocaleString('es-ES')}`;
+                propinaInfo.style.display = 'block';
+            } else {
+                propinaInfo.style.display = 'none';
+            }
+        });
+        
+        function completarVenta(ventaId) {
+            if (!ventaId) return;
+            
+            const medioPago = document.getElementById('medioPago').value;
+            if (!medioPago) {
+                showNotification('Debe seleccionar un medio de pago', 'warning');
+                return;
+            }
+            
+            const incluirPropina = document.getElementById('incluirPropina').checked;
+            const propina = incluirPropina ? Math.round(ventaTotal * 0.1) : 0;
+            
+            // Obtener el token anti-falsificación
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/Ventas/CompletarVenta', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ 
+                    id: ventaId,
+                    propina: propina,
+                    medioPago: medioPago
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // Cerrar el modal
+                    bootstrap.Modal.getInstance(document.getElementById('pagarModal')).hide();
+                    
+                    // Mostrar notificación
+                    showNotification('Venta completada exitosamente', 'success');
+                    
+                    // Actualizar la interfaz
+                    const fila = Array.from(document.querySelectorAll('tbody tr')).find(
+                        row => row.cells[0].textContent.trim() === ventaId.toString()
+                    );
+                    
+                    if (fila) {
+                        // Actualizar el estado en la tabla
+                        const estadoCell = fila.cells[4];
+                        estadoCell.innerHTML = '<span class="badge bg-success">Completada</span>';
+                        
+                        // Quitar el botón de pago
+                        const accionesCell = fila.cells[5];
+                        const btnPagar = accionesCell.querySelector('.btn-outline-success');
+                        if (btnPagar) {
+                            btnPagar.remove();
+                        }
+                        
+                        // Aplicar filtros actuales para actualizar los contadores
+                        applyFilters();
+                    }
+                } else {
+                    showNotification(result.message || 'Error al completar la venta', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error al procesar la solicitud', 'error');
+            });
+        }
+
+        // Función para actualizar los contadores del resumen de estados
+        function actualizarContadores() {
+            const filas = document.querySelectorAll('tbody tr');
+            
+            let completadas = 0;
+            let pendientes = 0;
+            let anuladas = 0;
+            
+            let totalCompletadas = 0;
+            let totalPendientes = 0;
+            let totalAnuladas = 0;
+            
+            filas.forEach(fila => {
+                const estado = fila.cells[4].querySelector('.badge').textContent.trim();
+                const totalStr = fila.cells[3].textContent.trim().replace('$', '').replace(/\./g, '');
+                const total = parseInt(totalStr) || 0;
+                
+                if (estado === 'Completada') {
+                    completadas++;
+                    totalCompletadas += total;
+                } else if (estado === 'Pendiente') {
+                    pendientes++;
+                    totalPendientes += total;
+                } else if (estado === 'Anulada') {
+                    anuladas++;
+                    totalAnuladas += total;
+                }
+            });
+            
+            // Actualizar los contadores en las alertas
+            document.querySelector('.alert-success .badge').textContent = `${completadas} ventas`;
+            document.querySelector('.alert-warning .badge').textContent = `${pendientes} ventas`;
+            document.querySelector('.alert-danger .badge').textContent = `${anuladas} ventas`;
+            
+            // Actualizar los totales
+            document.querySelectorAll('.alert-success .fw-bold')[0].textContent = `$${totalCompletadas.toLocaleString()}`;
+            document.querySelectorAll('.alert-warning .fw-bold')[0].textContent = `$${totalPendientes.toLocaleString()}`;
+            document.querySelectorAll('.alert-danger .fw-bold')[0].textContent = `$${totalAnuladas.toLocaleString()}`;
+        }
+
+        // Función de notificación usando Bootstrap Toasts
+        function showNotification(title, message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}</strong><br>
+                        ${message}
+                                </div>
+                    <button type="button" 
+                            class="btn-close btn-close-white me-2 m-auto" 
+                            data-bs-dismiss="toast" 
+                            aria-label="Close"></button>
+                            </div>
+                        `;
+
+            document.getElementById('toastContainer').appendChild(toast);
+            new bootstrap.Toast(toast, {
+                animation: true,
+                autohide: true,
+                delay: 3000
+            }).show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const dateFilter = document.getElementById('dateFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const tableBody = document.querySelector('tbody');
+            
+            // Establecer filtro "Hoy" por defecto
+            dateFilter.value = 'today';
+            
+            function applyFilters() {
+                const searchText = searchInput.value.toLowerCase();
+                const dateValue = dateFilter.value;
+                const statusValue = statusFilter.value;
+                
+                let ventasVisibles = {
+                    'Completada': { count: 0, total: 0 },
+                    'Pendiente': { count: 0, total: 0 },
+                    'Anulada': { count: 0, total: 0 }
+                };
+                
+                Array.from(tableBody.rows).forEach(row => {
+                    const cells = row.cells;
+                    const fechaVenta = parseFecha(cells[2].textContent);
+                    const estado = cells[4].querySelector('.badge').textContent.trim();
+                    const matchSearch = cells[1].textContent.toLowerCase().includes(searchText) || 
+                                      cells[0].textContent.includes(searchText);
+                    const matchDate = checkDateFilter(fechaVenta, dateValue);
+                    const matchStatus = statusValue === '' || estado === statusValue;
+                    
+                    const isVisible = (matchSearch && matchDate && matchStatus);
+                    row.style.display = isVisible ? '' : 'none';
+                    
+                    // Si es visible, contar para las alertas
+                    if (isVisible) {
+                        // Extraer el valor numérico del total (quitar $ y separadores de miles)
+                        const totalStr = cells[3].textContent.trim().replace('$', '').replace(/\./g, '');
+                        const total = parseInt(totalStr) || 0;
+                        
+                        if (ventasVisibles[estado]) {
+                            ventasVisibles[estado].count++;
+                            ventasVisibles[estado].total += total;
+                        }
+                    }
+                });
+                
+                // Actualizar las alertas con los datos filtrados
+                updateAlerts(ventasVisibles);
+            }
+
+            function updateAlerts(ventasVisibles) {
+                // Actualizar las alertas con los contadores filtrados
+                const alertCompletada = document.querySelector('.alert-success');
+                const alertPendiente = document.querySelector('.alert-warning');
+                const alertAnulada = document.querySelector('.alert-danger');
+                
+                if (alertCompletada) {
+                    alertCompletada.querySelector('.badge').textContent = `${ventasVisibles['Completada'].count} ventas`;
+                    alertCompletada.querySelector('.fw-bold').textContent = `$${ventasVisibles['Completada'].total.toLocaleString('es-CL')}`;
+                }
+                
+                if (alertPendiente) {
+                    alertPendiente.querySelector('.badge').textContent = `${ventasVisibles['Pendiente'].count} ventas`;
+                    alertPendiente.querySelector('.fw-bold').textContent = `$${ventasVisibles['Pendiente'].total.toLocaleString('es-CL')}`;
+                }
+                
+                if (alertAnulada) {
+                    alertAnulada.querySelector('.badge').textContent = `${ventasVisibles['Anulada'].count} ventas`;
+                    alertAnulada.querySelector('.fw-bold').textContent = `$${ventasVisibles['Anulada'].total.toLocaleString('es-CL')}`;
+                }
+            }
+
+            function parseFecha(fechaString) {
+                try {
+                    // Debug para ver qué estamos tratando de parsear
+                    console.log("Intentando parsear fecha:", fechaString);
+                    
+                    // Patrón para formato dd-MM-yyyy HH:mm
+                    const pattern = /(\d{1,2})-(\d{1,2})-(\d{4})\s+(\d{1,2}):(\d{1,2})/;
+                    const match = fechaString.match(pattern);
+                    
+                    if (!match) {
+                        console.error("El formato de fecha no coincide con el patrón esperado:", fechaString);
+                        return null;
+                    }
+                    
+                    const day = parseInt(match[1], 10);
+                    const month = parseInt(match[2], 10) - 1; // Los meses en JS son 0-11
+                    const year = parseInt(match[3], 10);
+                    const hours = parseInt(match[4], 10);
+                    const minutes = parseInt(match[5], 10);
+                    
+                    const fecha = new Date(year, month, day, hours, minutes);
+                    console.log("Fecha parseada:", fecha, "Formato ISO:", fecha.toISOString());
+                    return fecha;
+                } catch (error) {
+                    console.error("Error al parsear fecha:", fechaString, error);
+                    return null;
+                }
+            }
+
+            // Función auxiliar para convertir a formato yyyy-MM-dd si es necesario
+            function formatoFecha(fecha) {
+                if (!fecha) return '';
+                
+                const year = fecha.getFullYear();
+                const month = String(fecha.getMonth() + 1).padStart(2, '0');
+                const day = String(fecha.getDate()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}`;
+            }
+
+            function checkDateFilter(date, filterType) {
+                // Si no hay filtro o la fecha es inválida, mostrar la fila
+                if (filterType === '' || !date) {
+                    return true;
+                }
+                
+                try {
+                    // Obtener la fecha actual
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    // Extraer solo la parte de fecha de la fecha de venta
+                    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    
+                    switch(filterType) {
+                        case 'today':
+                            return dateOnly.getTime() === today.getTime();
+                            
+                        case 'week': {
+                            // Calcular el primer día de la semana actual (domingo)
+                            const firstDayOfWeek = new Date(today);
+                            const day = today.getDay(); // 0 = domingo, 1 = lunes, ...
+                            firstDayOfWeek.setDate(today.getDate() - day);
+                            
+                            return dateOnly >= firstDayOfWeek;
+                        }
+                            
+                        case 'month':
+                            return date.getMonth() === now.getMonth() && 
+                                   date.getFullYear() === now.getFullYear();
+                            
+                        default:
+                            return true;
+                    }
+                } catch (error) {
+                    console.error("Error en checkDateFilter:", error);
+                    return true; // En caso de error, mostrar la fila
+                }
+            }
+
+            // Event listeners para los filtros
+            searchInput.addEventListener('input', applyFilters);
+            dateFilter.addEventListener('change', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            
+            // Aplicar filtros inmediatamente al cargar la página
+            applyFilters();
+        });
+
+        function filtrarPorEstado(estado) {
+            document.getElementById('statusFilter').value = estado;
+            document.querySelector('select#statusFilter').dispatchEvent(new Event('change'));
+        }
+    </script>
+
+    <style>
+        .alert-clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+    </style>
+}

@@ -1,0 +1,122 @@
+@model VentaPOS.Models.BuscarUsuarioViewModel
+
+@{
+    ViewData["Title"] = "Cambiar Plan de Usuario";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="card-title">Cambiar Plan de Usuario</h1>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+            <p class="card-text">Busca un usuario por nombre o correo electrónico para gestionar sus planes de suscripción.</p>
+        </div>
+    </div>
+    
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Buscar Usuario</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="BuscarUsuarioPlan" method="post">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <input asp-for="TerminoBusqueda" class="form-control" placeholder="Nombre o correo electrónico" />
+                            <label asp-for="TerminoBusqueda">Nombre o correo electrónico</label>
+                            <span asp-validation-for="TerminoBusqueda" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary h-100 w-100">
+                            <i class="bi bi-search"></i> Buscar Usuario
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    @if (Model.UsuariosEncontrados != null && Model.UsuariosEncontrados.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Resultados de la Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in Model.UsuariosEncontrados)
+                            {
+                                <tr>
+                                    <td>@usuario.UsuarioId</td>
+                                    <td>@usuario.Nombre</td>
+                                    <td>@usuario.Correo</td>
+                                    <td>@usuario.Telefono</td>
+                                    <td>
+                                        @if (usuario.Activo == true)
+                                        {
+                                            <span class="badge bg-success">Activo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="GestionarPlanesUsuario" asp-route-id="@usuario.UsuarioId" class="btn btn-sm btn-info">
+                                            <i class="bi bi-gear"></i> Gestionar Planes
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model.UsuariosEncontrados != null)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No se encontraron usuarios con los criterios de búsqueda proporcionados.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+} 
