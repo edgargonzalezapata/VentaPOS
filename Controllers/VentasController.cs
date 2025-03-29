@@ -234,16 +234,6 @@ namespace VentaPOS.Controllers
                     return Json(new { success = false, message = "Empresa no válida" });
                 }
 
-                // Calcular el subtotal
-                decimal subtotal = ventaParams.Subtotal;
-                
-                // Manejar el ID del cliente - convertir de string a int?
-                int? clienteId = null;
-                if (!string.IsNullOrEmpty(ventaParams.ClienteId) && int.TryParse(ventaParams.ClienteId, out int parsedClienteId) && parsedClienteId > 0)
-                {
-                    clienteId = parsedClienteId;
-                }
-
                 using (var connection = _context.Database.GetDbConnection())
                 {
                     await connection.OpenAsync();
@@ -251,6 +241,61 @@ namespace VentaPOS.Controllers
                     {
                         try
                         {
+                            // Verificar stock antes de procesar la venta
+                            foreach (var producto in ventaParams.Productos)
+                            {
+                                if (!int.TryParse(producto.ProductoId, out int productoId))
+                                {
+                                    throw new Exception($"ID de producto no válido: {producto.ProductoId}");
+                                }
+
+                                // Verificar stock disponible
+                                string checkStockSql = @"
+                                    SELECT Stock 
+                                    FROM Productos 
+                                    WHERE ProductoID = @ProductoID AND EmpresaRut = @EmpresaRut";
+
+                                var stockDisponible = await connection.ExecuteScalarAsync<int>(checkStockSql, new
+                                {
+                                    ProductoID = productoId,
+                                    EmpresaRut = empresaRut
+                                }, transaction);
+
+                                if (stockDisponible < producto.Cantidad)
+                                {
+                                    throw new Exception($"Stock insuficiente para el producto ID: {productoId}");
+                                }
+                            }
+
+                            // Manejar el ID del cliente
+                            int? clienteId = null;
+                            if (!string.IsNullOrEmpty(ventaParams.ClienteId) && ventaParams.ClienteId != "0")
+                            {
+                                if (int.TryParse(ventaParams.ClienteId, out int parsedClienteId))
+                                {
+                                    // Verificar si el cliente existe
+                                    string checkClienteSql = @"
+                                        SELECT COUNT(1) 
+                                        FROM Clientes 
+                                        WHERE ClienteId = @ClienteId AND EmpresaRut = @EmpresaRut";
+
+                                    var clienteExists = await connection.ExecuteScalarAsync<int>(checkClienteSql, new
+                                    {
+                                        ClienteId = parsedClienteId,
+                                        EmpresaRut = empresaRut
+                                    }, transaction);
+
+                                    if (clienteExists > 0)
+                                    {
+                                        clienteId = parsedClienteId;
+                                    }
+                                    else
+                                    {
+                                        throw new Exception($"Cliente con ID {parsedClienteId} no encontrado");
+                                    }
+                                }
+                            }
+
                             // Insertar la venta
                             string insertVentaSql = @"
                                 INSERT INTO Ventas (UsuarioID, ClienteID, FechaVenta, MetodoPago, Subtotal, Impuestos, Descuento, Total, Comentarios, EmpresaRut, Estado)
@@ -269,27 +314,22 @@ namespace VentaPOS.Controllers
                                 Total = ventaParams.Total,
                                 Comentarios = ventaParams.Notas,
                                 EmpresaRut = empresaRut,
-                                Estado = "Pendiente" // Estado por defecto para nuevos pedidos
+                                Estado = "Pendiente"
                             }, transaction);
 
-                            // Insertar los detalles de la venta
+                            // Insertar los detalles y actualizar el stock
                             foreach (var producto in ventaParams.Productos)
                             {
-                                // Convertir ProductoId de string a int
                                 if (!int.TryParse(producto.ProductoId, out int productoId))
                                 {
                                     throw new Exception($"ID de producto no válido: {producto.ProductoId}");
                                 }
 
-                                // Calcular el subtotal para este detalle
+                                // Calcular valores para el detalle
                                 decimal subtotalDetalle = producto.Cantidad * producto.Precio;
-                                
-                                // Por ahora, no aplicamos descuentos a nivel de producto individual
-                                decimal? descuentoProducto = null;
-                                
-                                // Calcular el impuesto para este producto (19%)
                                 decimal? impuestoProducto = subtotalDetalle * 0.19m;
 
+                                // Insertar detalle de venta
                                 string insertDetalleSql = @"
                                     INSERT INTO DetallesVenta (VentaID, ProductoID, Cantidad, PrecioUnitario, Descuento, Impuesto, Subtotal)
                                     VALUES (@VentaID, @ProductoID, @Cantidad, @PrecioUnitario, @Descuento, @Impuesto, @Subtotal)";
@@ -300,18 +340,18 @@ namespace VentaPOS.Controllers
                                     ProductoID = productoId,
                                     Cantidad = producto.Cantidad,
                                     PrecioUnitario = producto.Precio,
-                                    Descuento = descuentoProducto,
+                                    Descuento = (decimal?)null,
                                     Impuesto = impuestoProducto,
                                     Subtotal = subtotalDetalle
                                 }, transaction);
 
-                                // Actualizar el inventario
-                                string updateInventarioSql = @"
-                                    UPDATE Inventario 
-                                    SET Cantidad = Cantidad - @Cantidad 
+                                // Actualizar el stock en la tabla Productos
+                                string updateStockSql = @"
+                                    UPDATE Productos 
+                                    SET Stock = Stock - @Cantidad 
                                     WHERE ProductoID = @ProductoID AND EmpresaRut = @EmpresaRut";
 
-                                await connection.ExecuteAsync(updateInventarioSql, new
+                                await connection.ExecuteAsync(updateStockSql, new
                                 {
                                     Cantidad = producto.Cantidad,
                                     ProductoID = productoId,
@@ -320,7 +360,7 @@ namespace VentaPOS.Controllers
                             }
 
                             transaction.Commit();
-                            return Json(new { success = true, message = "Pedido creado con éxito", ventaId = ventaId, estado = "Pendiente" });
+                            return Json(new { success = true, message = "Pedido creado con éxito", ventaId = ventaId });
                         }
                         catch (Exception ex)
                         {
