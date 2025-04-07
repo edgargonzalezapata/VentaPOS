@@ -17,7 +17,7 @@ namespace VentaPOS.Models
         public bool RememberMe { get; set; }
         
         [Display(Name = "Tipo de Usuario")]
-        public string TipoUsuario { get; set; } = "Empleado"; // Valores: "Empresa" o "Empleado"
+        public string TipoUsuario { get; set; } = "Usuario"; // Valores: "Empresa" o "Usuario"
 
         [Display(Name = "Etiqueta de Entrada")]
         public string EtiquetaEntrada => TipoUsuario == "Empresa" ? "RUT" : "Correo Electrónico";

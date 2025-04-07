@@ -560,5 +560,57 @@ namespace VentaPOS.Controllers
                 return Json(new { success = false, message = "Error al completar la venta" });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearCliente([FromBody] Cliente cliente)
+        {
+            try
+            {
+                // Validación manual de campos requeridos
+                if (string.IsNullOrEmpty(cliente.RutCliente))
+                {
+                    return Json(new { success = false, message = "El RUT es requerido" });
+                }
+                if (string.IsNullOrEmpty(cliente.Nombre))
+                {
+                    return Json(new { success = false, message = "El nombre es requerido" });
+                }
+                if (string.IsNullOrEmpty(cliente.Apellidos))
+                {
+                    return Json(new { success = false, message = "Los apellidos son requeridos" });
+                }
+
+                // Obtener la empresa del usuario actual
+                var empresaRut = HttpContext.Session.GetString("EmpresaRut");
+                if (string.IsNullOrEmpty(empresaRut))
+                {
+                    return Json(new { success = false, message = "Sesión inválida" });
+                }
+
+                // Verificar si el RUT ya existe
+                var rutExistente = await _context.Clientes
+                    .AnyAsync(c => c.RutCliente == cliente.RutCliente && c.EmpresaRut == empresaRut);
+
+                if (rutExistente)
+                {
+                    return Json(new { success = false, message = "El RUT ingresado ya existe" });
+                }
+
+                // Asignar valores adicionales
+                cliente.EmpresaRut = empresaRut;
+                cliente.UltimaCompra = DateTime.Now;
+
+                // Guardar el cliente
+                _context.Clientes.Add(cliente);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, clienteId = cliente.ClienteId });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al crear el cliente: " + ex.Message });
+            }
+        }
     }
 } 

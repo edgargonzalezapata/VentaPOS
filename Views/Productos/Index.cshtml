@@ -1,107 +1,154 @@
 @model VentaPOS.Models.ViewModels.ProductosIndexVM
 
 @{
-    ViewData["Title"] = "Productos";
+    ViewData["Title"] = "Gestión de Productos";
     Layout = "_PanelLayout";
 }
 
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mt-4">
-            <i class="bi bi-box me-2"></i>Productos
-        </h1>
-        <button onclick="abrirModalCrear()" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-2"></i>Agregar Producto
-        </button>
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 3;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 3;
+            display: none;
+        }
+
+        .search-input {
+            padding-left: 2.5rem !important;
+            padding-right: 2.5rem !important;
+            border-radius: 0.5rem;
+        }
+        
+        /* Ocultar el campo de búsqueda de DataTables */
+        .dataTables_filter {
+            display: none !important;
+        }
+        
+        /* Ocultar la barra inferior de DataTables */
+        .dataTables_info, .dataTables_paginate {
+            display: none !important;
+        }
+    </style>
+}
+
+<div class="container p-4">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2">Gestión de Productos</h1>
+                <p class="lead">Administra el inventario de tus productos</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" id="btnNuevoProducto">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nuevo Producto
+                </button>
+            </div>
+        </div>
     </div>
 
+    <!-- Filtros -->
     <div class="card mb-4">
-        <div class="card-header">
-            <i class="bi bi-table me-2"></i>Listado de Productos
-        </div>
         <div class="card-body">
-            <!-- Filtros -->
-            <div class="row mb-4 g-3">
-                <div class="col-md-4">
-                    <input type="text" 
-                           id="buscarProducto" 
-                           class="form-control" 
-                           placeholder="Buscar..." 
-                           value="@ViewBag.SearchTerm">
+            <div class="row g-3">
+                <div class="col-12 col-md-5">
+                    <div class="search-wrapper">
+                        <div class="search-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <input type="text" 
+                               id="filtroDescripcion" 
+                               class="form-control form-control-lg search-input" 
+                               placeholder="Buscar por código, nombre o descripción...">
+                        <div class="clear-search" id="searchClearButton">
+                            <i class="bi bi-x-lg"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <select id="filtroCategoria" class="form-select">
+                <div class="col-12 col-md-3">
+                    <select class="form-select form-select-lg" id="filtroCategoria">
                         <option value="">Todas las categorías</option>
                         @foreach (var categoria in Model.Categorias)
                         {
-                            <option value="@categoria.CategoriaID" selected="@((int?)ViewBag.CategoriaID == categoria.CategoriaID)">
-                                @categoria.Nombre
-                            </option>
+                            <option value="@categoria.CategoriaID">@categoria.Nombre</option>
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <select id="ordenarPor" class="form-select">
-                        <option value="nombre" selected="@(ViewBag.OrdenarPor == "nombre")">Ordenar por</option>
-                        <option value="nombre_desc" selected="@(ViewBag.OrdenarPor == "nombre_desc")">Nombre (Z-A)</option>
-                        <option value="precio_asc" selected="@(ViewBag.OrdenarPor == "precio_asc")">Precio ascendente</option>
-                        <option value="precio_desc" selected="@(ViewBag.OrdenarPor == "precio_desc")">Precio descendente</option>
+                <div class="col-12 col-md-3">
+                    <select class="form-select form-select-lg" id="filtroStock">
+                        <option value="">Estado del stock</option>
+                        <option value="disponible">Disponible</option>
+                        <option value="agotado">Agotado</option>
+                        <option value="bajo">Stock bajo</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button onclick="aplicarFiltros()" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-funnel me-2"></i>Filtrar
+                <div class="col-12 col-md-1">
+                    <button type="button" class="btn btn-outline-secondary btn-lg h-100 w-100" id="btnLimpiarFiltros">
+                        <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
             </div>
+            <div id="resultCount" class="text-muted mt-3"></div>
+        </div>
+    </div>
 
-            <!-- Tabla -->
+    <!-- Tabla de Productos -->
+    <div class="card">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped table-bordered">
-                    <thead class="table-dark">
+                <table class="table table-hover mb-0" id="productosTable">
+                    <thead class="table-light">
                         <tr>
                             <th>Código</th>
                             <th>Nombre</th>
-                            <th class="text-center">Categoría</th>
-                            <th class="text-center">Precio</th>
-                            <th class="text-center">Stock</th>
-                            <th class="text-center">Últ. Actualización</th>
-                            <th class="text-center">Acciones</th>
+                            <th>Descripción</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Categoría</th>
+                            <th>Última Actualización</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var producto in Model.Productos)
+                        @foreach (var item in Model.Productos)
                         {
                             <tr>
-                                <td>@producto.Codigo</td>
-                                <td>
-                                    <div class="fw-bold">@producto.Nombre</div>
-                                    @if (!string.IsNullOrEmpty(producto.Descripcion))
-                                    {
-                                        <div class="text-muted small">@producto.Descripcion</div>
-                                    }
-                                </td>
-                                <td class="text-center">@producto.Categoria?.Nombre</td>
-                                <td class="text-end">@producto.Precio.ToString("$#,##0")</td>
-                                <td class="text-center">
-                                    <span class="badge @(producto.Stock > 0 ? "bg-success" : "bg-danger")">
-                                        @producto.Stock
-                                    </span>
-                                </td>
-                                <td class="text-center">@producto.UltimaActualizacion?.ToString("g")</td>
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <a href="@Url.Action("Edit", new { id = producto.ProductoID })" 
-                                           class="btn btn-sm btn-outline-primary px-3">
-                                            <i class="bi bi-pencil me-2"></i>Editar
-                                        </a>
-                                        <form asp-action="Delete" asp-route-id="@producto.ProductoID" method="post"
-                                              onsubmit="return confirm('¿Está seguro de eliminar este producto?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger px-3">
-                                                <i class="bi bi-trash me-2"></i>Eliminar
-                                            </button>
-                                        </form>
-                                    </div>
+                                <td>@item.Codigo</td>
+                                <td>@item.Nombre</td>
+                                <td>@item.Descripcion</td>
+                                <td>$@item.Precio.ToString("N0")</td>
+                                <td>@item.Stock</td>
+                                <td>@item.Categoria?.Nombre</td>
+                                <td>@(item.UltimaActualizacion?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editarProducto(@item.ProductoID)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(@item.ProductoID)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         }
@@ -112,130 +159,566 @@
     </div>
 </div>
 
-<!-- Modal de creación -->
-<div class="modal fade" id="crearProductoModal" tabindex="-1" aria-labelledby="crearProductoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal para crear/editar producto -->
+<div class="modal fade" id="productoModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="crearProductoModalLabel">
-                    <i class="bi bi-box-seam me-2"></i>Nuevo Producto
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <form asp-action="Create" method="post" id="createForm">
-                <div class="modal-body">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="modal-body">
+                <form id="productoForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="productoId" value="0" />
                     
-                    <input type="hidden" name="EmpresaRut" value="@Context.Session.GetString("EmpresaRut")" />
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Código</label>
-                            <input name="Codigo" class="form-control" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Codigo" data-valmsg-replace="true"></span>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Nombre</label>
-                            <input name="Nombre" class="form-control" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Categoría</label>
-                            <select name="CategoriaID" class="form-select" required>
-                                <option value="">Seleccione categoría</option>
-                                @foreach (var categoria in Model.Categorias)
-                                {
-                                    <option value="@categoria.CategoriaID">@categoria.Nombre</option>
-                                }
-                            </select>
-                            <span class="text-danger field-validation-valid" data-valmsg-for="CategoriaID" data-valmsg-replace="true"></span>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Precio</label>
-                            <input name="Precio" type="number" step="0.01" class="form-control" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Precio" data-valmsg-replace="true"></span>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Stock</label>
-                            <input name="Stock" type="number" class="form-control" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Stock" data-valmsg-replace="true"></span>
-                        </div>
-                        
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Descripción</label>
-                            <textarea name="Descripcion" class="form-control" rows="3"></textarea>
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Descripcion" data-valmsg-replace="true"></span>
+                    <div class="mb-3">
+                        <label for="codigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" required maxlength="50">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="100">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required maxlength="500"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="precio" class="form-label">Precio</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="precio" name="precio" required min="1">
                         </div>
                     </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-2"></i>Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save me-2"></i>Guardar
-                    </button>
-                </div>
-            </form>
+
+                    <div class="mb-3">
+                        <label for="stock" class="form-label">Stock</label>
+                        <input type="number" class="form-control" id="stock" name="stock" required min="0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="categoriaId" class="form-label">Categoría</label>
+                        <select class="form-select" id="categoriaId" name="categoriaId" required>
+                            <option value="">Seleccione una categoría...</option>
+                            @foreach (var categoria in Model.Categorias)
+                            {
+                                <option value="@categoria.CategoriaID">@categoria.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <!-- DataTables -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
     <script>
-        function aplicarFiltros() {
-            const params = new URLSearchParams({
-                searchTerm: document.getElementById('buscarProducto').value,
-                categoriaID: document.getElementById('filtroCategoria').value,
-                ordenarPor: document.getElementById('ordenarPor').value
-            });
+        // Variables globales
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        let productoModal;
+        let dataTable;
+
+        // Inicialización cuando el DOM está listo
+        $(document).ready(function () {
+            // Inicializar el modal
+            productoModal = new bootstrap.Modal(document.getElementById('productoModal'));
             
-            window.location.href = `?${params.toString()}`;
+            // Inicializar DataTable
+            dataTable = $('#productosTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                responsive: true,
+                paging: false,
+                info: false,
+                searching: true,
+                order: [[1, 'asc']], // Ordenar por nombre por defecto
+                columnDefs: [
+                    { targets: -1, orderable: false } // Última columna (acciones) no ordenable
+                ],
+                dom: 't' // Solo mostrar la tabla, quitar todos los controles
+            });
+
+            // Configurar barra de búsqueda personalizada
+            const searchInput = document.getElementById('filtroDescripcion');
+            const searchClearButton = document.getElementById('searchClearButton');
+
+            searchInput.addEventListener('input', function(e) {
+                const hasValue = e.target.value.length > 0;
+                searchClearButton.style.display = hasValue ? 'block' : 'none';
+                
+                // Debounce para la búsqueda mientras se escribe
+                clearTimeout(this.timeoutId);
+                this.timeoutId = setTimeout(aplicarFiltros, 300);
+            });
+
+            searchClearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClearButton.style.display = 'none';
+                searchInput.focus();
+                aplicarFiltros();
+            });
+
+            // Event listeners para filtros
+            setupFilterEventListeners();
+
+            // Event listener para nuevo producto
+            $('#btnNuevoProducto').on('click', function() {
+                document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+                document.getElementById('productoId').value = '0';
+                document.getElementById('productoForm').reset();
+                productoModal.show();
+            });
+
+            // Event listener para el formulario
+            $('#productoForm').on('submit', handleSubmit);
+
+            // Mostrar contador de resultados inicial
+            updateResultCount(dataTable.rows().count());
+        });
+
+        // Configurar event listeners para filtros
+        function setupFilterEventListeners() {
+            // Filtros de selección
+            $('#filtroCategoria, #filtroStock').on('change', aplicarFiltros);
+
+            // Botón limpiar
+            $('#btnLimpiarFiltros').on('click', function() {
+                $('#filtroDescripcion').val('');
+                $('#filtroCategoria').val('');
+                $('#filtroStock').val('');
+                document.getElementById('searchClearButton').style.display = 'none';
+                aplicarFiltros();
+            });
         }
 
-        // Event listeners para filtros en tiempo real
-        document.getElementById('buscarProducto').addEventListener('input', aplicarFiltros);
-        document.getElementById('filtroCategoria').addEventListener('change', aplicarFiltros);
-        document.getElementById('ordenarPor').addEventListener('change', aplicarFiltros);
+        // Función para aplicar filtros
+        function aplicarFiltros() {
+            const searchValue = $('#filtroDescripcion').val().toLowerCase();
+            const categoriaValue = $('#filtroCategoria').val();
+            const stockValue = $('#filtroStock').val();
 
-        function abrirModalCrear() {
-            $('#crearProductoModal').modal('show');
+            dataTable.rows().every(function() {
+                const data = this.data();
+                let visible = true;
+
+                // Filtro de búsqueda
+                if (searchValue) {
+                    const searchableText = (data[0] + ' ' + data[1] + ' ' + data[2]).toLowerCase();
+                    visible = searchableText.includes(searchValue);
+                }
+
+                // Filtro de categoría
+                if (visible && categoriaValue) {
+                    visible = data[5] === $('#filtroCategoria option:selected').text();
+                }
+
+                // Filtro de stock
+                if (visible && stockValue) {
+                    const stock = parseInt(data[4]);
+                    switch (stockValue) {
+                        case 'disponible':
+                            visible = stock > 0;
+                            break;
+                        case 'agotado':
+                            visible = stock === 0;
+                            break;
+                        case 'bajo':
+                            visible = stock > 0 && stock <= 10;
+                            break;
+                    }
+                }
+
+                this.nodes().to$().toggle(visible);
+                return visible;
+            });
+
+            // Actualizar el contador de resultados
+            const totalVisible = dataTable.rows(':visible').count();
+            updateResultCount(totalVisible);
         }
 
-        // Manejar el envío del formulario con AJAX
-        $('#createForm').submit(function(e) {
+        // Función para actualizar el contador de resultados
+        function updateResultCount(count) {
+            const mensaje = count === 0 
+                ? 'No se encontraron productos' 
+                : `Se encontraron ${count} producto(s)`;
+
+            // Si no existe el elemento para el contador, lo creamos
+            let countElement = $('#resultCount');
+            if (countElement.length === 0) {
+                $('.table-responsive').before('<div id="resultCount" class="text-muted mb-2"></div>');
+                countElement = $('#resultCount');
+            }
+
+            countElement.text(mensaje);
+        }
+
+        // Función para editar producto
+        async function editarProducto(id) {
+            try {
+                const response = await fetch(`/Productos/Edit/${id}`);
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('modalTitle').textContent = 'Editar Producto';
+                    document.getElementById('productoId').value = data.producto.productoID;
+                    document.getElementById('codigo').value = data.producto.codigo;
+                    document.getElementById('nombre').value = data.producto.nombre;
+                    document.getElementById('descripcion').value = data.producto.descripcion;
+                    document.getElementById('precio').value = data.producto.precio;
+                    document.getElementById('stock').value = data.producto.stock;
+                    document.getElementById('categoriaId').value = data.producto.categoriaID;
+                    productoModal.show();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Error al cargar el producto'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al cargar el producto'
+                });
+            }
+        }
+
+        // Función para eliminar producto
+        async function eliminarProducto(id) {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    // Mostrar indicador de carga
+                    Swal.fire({
+                        title: 'Eliminando producto...',
+                        text: 'Por favor espere',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    const formData = new FormData();
+                    formData.append('id', id);
+                    formData.append('__RequestVerificationToken', antiForgeryToken);
+                    
+                    const response = await fetch('/Productos/Delete/' + id, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': antiForgeryToken
+                        },
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const text = await response.text();
+                        console.error('Error en eliminación:', text);
+                        throw new Error('Error al eliminar el producto');
+                    }
+                    
+                    // Actualizar la tabla
+                    await actualizarTablaProductos();
+                    
+                    // Mostrar notificación de éxito
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Producto eliminado correctamente'
+                    });
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Error al eliminar el producto',
+                        confirmButtonText: 'Entendido'
+                    });
+                }
+            }
+        }
+
+        // Función para manejar el envío del formulario
+        async function handleSubmit(e) {
             e.preventDefault();
             
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        $('#crearProductoModal').modal('hide');
-                        window.location.reload();
-                    } else {
-                        $('#crearProductoModal').modal('handleUpdate');
-                        $(document.body).html(response);
-                    }
-                },
-                error: function(xhr) {
-                    $('#crearProductoModal').modal('handleUpdate');
-                    $(document.body).html(xhr.responseText);
-                }
-            });
-        });
+            try {
+                const productoId = document.getElementById('productoId').value;
+                const producto = {
+                    productoID: parseInt(productoId),
+                    codigo: document.getElementById('codigo').value.trim(),
+                    nombre: document.getElementById('nombre').value.trim(),
+                    descripcion: document.getElementById('descripcion').value.trim(),
+                    precio: parseFloat(document.getElementById('precio').value),
+                    stock: parseInt(document.getElementById('stock').value),
+                    categoriaID: parseInt(document.getElementById('categoriaId').value)
+                };
 
-        // Reiniciar el formulario al cerrar el modal
-        $('#crearProductoModal').on('hidden.bs.modal', function() {
-            $(this).find('form')[0].reset();
-            $(this).find('.text-danger').text('');
-        });
+                // Validaciones básicas
+                if (!producto.codigo || !producto.nombre || !producto.descripcion) {
+                    throw new Error('Por favor complete todos los campos requeridos');
+                }
+
+                if (producto.precio <= 0) {
+                    throw new Error('El precio debe ser mayor a 0');
+                }
+
+                if (producto.stock < 0) {
+                    throw new Error('El stock no puede ser negativo');
+                }
+
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Guardando cambios...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const esNuevo = productoId === '0';
+                const url = esNuevo ? '/Productos/Create' : '/Productos/Update';
+                
+                if (esNuevo) {
+                    // Para Create, usamos FormData
+                    const formData = new FormData(document.getElementById('productoForm'));
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const text = await response.text();
+                        console.error('Error Response:', text);
+                        
+                        if (text.includes('<!DOCTYPE html>')) {
+                            // Si la respuesta es HTML, probablemente sea el formulario con errores
+                            throw new Error('Por favor verifique los campos del formulario');
+                        }
+                        
+                        throw new Error('Error en el servidor. Por favor, intente nuevamente.');
+                    }
+
+                    let result;
+                    try {
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            result = await response.json();
+                        } else {
+                            console.error('Respuesta no JSON en Create');
+                            throw new Error('El servidor no respondió en el formato esperado');
+                        }
+                    } catch (parseError) {
+                        console.error('Error al procesar la respuesta de Create:', parseError);
+                        // Si el servidor no devuelve JSON, asumimos que fue exitoso
+                        result = { success: true };
+                    }
+
+                    if (result.success) {
+                        // Cerrar el modal
+                        productoModal.hide();
+                        
+                        // Actualizar la tabla
+                        await actualizarTablaProductos();
+
+                        // Mostrar notificación de éxito
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Producto creado correctamente'
+                        });
+                    } else {
+                        throw new Error(result.message || 'Error al crear el producto');
+                    }
+                    
+                    return;
+                } else {
+                    // Para Update, usamos JSON como antes
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': antiForgeryToken
+                        },
+                        body: JSON.stringify(producto)
+                    });
+
+                    let result;
+                    try {
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            result = await response.json();
+                        } else {
+                            const text = await response.text();
+                            console.error('Respuesta no JSON:', text);
+                            throw new Error('El servidor no respondió en el formato esperado');
+                        }
+                    } catch (parseError) {
+                        console.error('Error al procesar la respuesta:', parseError);
+                        throw new Error('Error al procesar la respuesta del servidor');
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(result?.message || 'Error en el servidor');
+                    }
+
+                    if (result.success) {
+                        // Cerrar el modal
+                        productoModal.hide();
+                        
+                        // Actualizar la tabla
+                        await actualizarTablaProductos();
+
+                        // Mostrar notificación de éxito
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Producto actualizado correctamente'
+                        });
+                    } else {
+                        throw new Error(result.message || 'Error al guardar el producto');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Error al guardar el producto',
+                    confirmButtonText: 'Entendido'
+                });
+            }
+        }
+
+        // Función para actualizar la tabla de productos
+        async function actualizarTablaProductos() {
+            try {
+                const response = await fetch('/Productos/Buscar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': antiForgeryToken
+                    },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) throw new Error('Error al actualizar la tabla');
+
+                const result = await response.json();
+                if (result.success) {
+                    // Limpiar la tabla
+                    dataTable.clear();
+
+                    // Agregar los nuevos datos
+                    result.data.forEach(producto => {
+                        dataTable.row.add([
+                            producto.codigo,
+                            producto.nombre,
+                            producto.descripcion,
+                            `$${Number(producto.precio).toLocaleString('es-CL')}`,
+                            producto.stock,
+                            producto.categoria || '-',
+                            producto.ultimaActualizacion,
+                            `<button type="button" class="btn btn-sm btn-outline-primary" onclick="editarProducto(${producto.productoID})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(${producto.productoID})">
+                                <i class="bi bi-trash"></i>
+                            </button>`
+                        ]);
+                    });
+
+                    // Redibujar la tabla
+                    dataTable.draw();
+
+                    // Actualizar el contador de resultados
+                    updateResultCount(result.data.length);
+
+                    // Volver a aplicar los filtros actuales
+                    aplicarFiltros();
+                } else {
+                    throw new Error(result.message || 'Error al actualizar la tabla');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al actualizar la tabla de productos'
+                });
+            }
+        }
     </script>
 } 

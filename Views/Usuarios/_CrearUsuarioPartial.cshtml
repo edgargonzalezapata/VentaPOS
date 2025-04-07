@@ -1,40 +1,67 @@
 @model VentaPOS.Models.Usuario
 
-<div class="modal-header">
-    <h5 class="modal-title">Crear Nuevo Usuario</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-<div class="modal-body">
-    <form id="formCrearUsuario">
-        <input type="hidden" asp-for="EmpresaRut" value="@ViewBag.EmpresaRut" />
+<form id="formCrearUsuario" class="h-100 d-flex flex-column">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="EmpresaRut" value="@ViewBag.EmpresaRut" />
+    
+    <div class="flex-grow-1 overflow-auto p-3">
+        <h5 class="mb-4">Crear Nuevo Usuario</h5>
         
         <div class="mb-3">
             <label asp-for="Nombre" class="form-label">Nombre</label>
-            <input asp-for="Nombre" class="form-control" required />
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-person-fill"></i>
+                </span>
+                <input asp-for="Nombre" class="form-control" required />
+            </div>
         </div>
         
         <div class="mb-3">
             <label asp-for="Correo" class="form-label">Correo</label>
-            <input asp-for="Correo" type="email" class="form-control" required />
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-envelope-fill"></i>
+                </span>
+                <input asp-for="Correo" type="email" class="form-control" required />
+            </div>
         </div>
         
         <div class="mb-3">
             <label asp-for="Telefono" class="form-label">Teléfono</label>
-            <input asp-for="Telefono" class="form-control" />
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-telephone-fill"></i>
+                </span>
+                <input asp-for="Telefono" class="form-control" />
+            </div>
         </div>
         
         <div class="mb-3">
             <label class="form-label">Roles</label>
-            <select asp-items="ViewBag.RolesDisponibles" class="form-select" multiple required>
-            </select>
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-shield-fill"></i>
+                </span>
+                <select name="Rols" asp-items="ViewBag.RolesDisponibles" class="form-select" multiple required>
+                </select>
+            </div>
         </div>
         
         <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
             La contraseña temporal será: 123456
         </div>
-    </form>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-    <button type="button" class="btn btn-primary" onclick="crearUsuario()">Crear Usuario</button>
-</div> 
+    </div>
+
+    <div class="border-top p-3">
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary" onclick="crearUsuario()">
+                <i class="bi bi-person-plus-fill me-2"></i>Crear Usuario
+            </button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+                <i class="bi bi-x-lg me-2"></i>Cancelar
+            </button>
+        </div>
+    </div>
+</form> 

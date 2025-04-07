@@ -72,11 +72,13 @@
     </div>
 </div>
 
-<!-- Modal para Crear/Editar Usuario -->
-<div class="modal fade" id="usuarioModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content" id="modalContent">
-        </div>
+<!-- Offcanvas para Crear/Editar Usuario -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="usuarioOffcanvas" aria-labelledby="usuarioOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="usuarioOffcanvasLabel">Gestionar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="offcanvasContent">
     </div>
 </div>
 
@@ -89,19 +91,47 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                @Html.AntiForgeryToken()
                 <input type="hidden" id="usuarioIdContraseña" />
                 <div class="mb-3">
                     <label class="form-label">Nueva Contraseña</label>
-                    <input type="password" id="nuevaContraseña" class="form-control" required />
+                    <div class="input-group">
+                        <input type="password" id="nuevaContraseña" class="form-control" required minlength="6" />
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('nuevaContraseña')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Confirmar Contraseña</label>
-                    <input type="password" id="confirmarContraseña" class="form-control" required />
+                    <div class="input-group">
+                        <input type="password" id="confirmarContraseña" class="form-control" required minlength="6" />
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmarContraseña')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" onclick="cambiarContraseña()">Guardar Contraseña</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mensajes de error -->
+<div class="modal fade" id="mensajeModal" tabindex="-1" aria-labelledby="mensajeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mensajeModalLabel">Mensaje</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="mensajeModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
             </div>
         </div>
     </div>
@@ -125,56 +155,144 @@
 
 @section Scripts {
     <script>
-        // Mostrar modal de creación de usuario
+        // Mostrar offcanvas de creación de usuario
         function mostrarCrearUsuario() {
             $.get('/Usuarios/ObtenerFormularioCreacion', { empresaRut: '@ViewBag.EmpresaRut' }, function(data) {
-                $('#modalContent').html(data);
-                $('#usuarioModal').modal('show');
+                $('#offcanvasContent').html(data);
+                var offcanvas = new bootstrap.Offcanvas(document.getElementById('usuarioOffcanvas'));
+                offcanvas.show();
             });
         }
 
         // Mostrar detalles de usuario
         function mostrarDetalles(id) {
             $.get('/Usuarios/ObtenerDetallesUsuario/' + id, function(data) {
-                $('#modalContent').html(data);
-                $('#usuarioModal').modal('show');
+                $('#offcanvasContent').html(data);
+                var offcanvas = new bootstrap.Offcanvas(document.getElementById('usuarioOffcanvas'));
+                offcanvas.show();
             });
         }
 
         // Crear nuevo usuario
         function crearUsuario() {
-            var formData = $('#formCrearUsuario').serialize();
-            $.post('/Usuarios/CrearUsuario', formData, function(response) {
-                if (response.success) {
-                    $('#usuarioModal').modal('hide');
-                    location.reload();
-                } else {
-                    alert(response.message);
+            var form = $('#formCrearUsuario');
+            var formData = {
+                EmpresaRut: form.find('[name="EmpresaRut"]').val(),
+                Nombre: form.find('[name="Nombre"]').val(),
+                Correo: form.find('[name="Correo"]').val(),
+                Telefono: form.find('[name="Telefono"]').val(),
+                Rols: form.find('select[name="Rols"] option:selected').map(function() {
+                    return { RolId: parseInt($(this).val()), Nombre: $(this).text() };
+                }).get()
+            };
+
+            console.log('Datos a enviar:', formData);
+
+            if (!formData.Nombre) {
+                mostrarMensajeModal('El nombre es requerido');
+                return;
+            }
+
+            if (!formData.Correo) {
+                mostrarMensajeModal('El correo es requerido');
+                return;
+            }
+
+            if (!formData.Rols || formData.Rols.length === 0) {
+                mostrarMensajeModal('Debe seleccionar al menos un rol');
+                return;
+            }
+
+            $.ajax({
+                url: '/Usuarios/CrearUsuario',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                headers: {
+                    'RequestVerificationToken': form.find('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('usuarioOffcanvas'));
+                        offcanvas.hide();
+                        location.reload();
+                    } else {
+                        console.error('Error en la respuesta:', response);
+                        mostrarMensajeModal(response.message || 'Error al crear el usuario');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error en la petición:', {xhr: xhr, status: status, error: error});
+                    mostrarMensajeModal('Error al crear el usuario: ' + error);
                 }
             });
         }
 
         // Guardar cambios de usuario
         function guardarCambios() {
-            var formData = $('#formEditarUsuario').serialize();
-            $.post('/Usuarios/ActualizarUsuario', formData, function(response) {
-                if (response.success) {
-                    $('#usuarioModal').modal('hide');
-                    location.reload();
-                } else {
-                    alert(response.message);
+            var form = $('#formEditarUsuario');
+            var formData = {
+                UsuarioId: parseInt(form.find('[name="UsuarioId"]').val()),
+                EmpresaRut: form.find('[name="EmpresaRut"]').val(),
+                Nombre: form.find('[name="Nombre"]').val(),
+                Correo: form.find('[name="Correo"]').val(),
+                Telefono: form.find('[name="Telefono"]').val(),
+                Activo: form.find('[name="Activo"]').is(':checked'),
+                Rols: form.find('select option:selected').map(function() {
+                    return { RolId: parseInt($(this).val()), Nombre: $(this).text() };
+                }).get()
+            };
+
+            console.log('Datos a enviar:', formData);
+
+            $.ajax({
+                url: '/Usuarios/ActualizarUsuario',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('usuarioOffcanvas'));
+                        offcanvas.hide();
+                        location.reload();
+                    } else {
+                        console.error('Error en la respuesta:', response);
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error en la petición:', {xhr: xhr, status: status, error: error});
+                    alert('Error al guardar los cambios: ' + error);
                 }
             });
         }
 
         // Eliminar usuario
         function eliminarUsuario(id) {
-            if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
-                $.post('/Usuarios/EliminarUsuario/' + id, function(response) {
-                    if (response.success) {
-                        location.reload();
-                    } else {
-                        alert(response.message);
+            if (confirm('¿Está seguro de que desea eliminar este usuario? Esta acción no se puede deshacer.')) {
+                $.ajax({
+                    url: '/Usuarios/EliminarUsuario/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('usuarioOffcanvas'));
+                            if (offcanvas) {
+                                offcanvas.hide();
+                            }
+                            location.reload();
+                        } else {
+                            alert(response.message || 'No se pudo eliminar el usuario');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error al eliminar usuario:', error);
+                        alert('Error al eliminar el usuario. Por favor, intente nuevamente.');
                     }
                 });
             }
@@ -197,14 +315,55 @@
                 return;
             }
 
-            $.post('/Usuarios/CambiarContraseña', { id: id, nuevaContraseña: nuevaContraseña }, function(response) {
-                if (response.success) {
-                    $('#cambioContraseñaModal').modal('hide');
-                    alert('Contraseña actualizada exitosamente');
-                } else {
-                    alert(response.message);
+            if (nuevaContraseña.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+
+            $.ajax({
+                url: '/Usuarios/CambiarContraseña',
+                type: 'POST',
+                data: { id: id, nuevaContraseña: nuevaContraseña },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#cambioContraseñaModal').modal('hide');
+                        $('#nuevaContraseña').val('');
+                        $('#confirmarContraseña').val('');
+                        alert('Contraseña actualizada exitosamente');
+                    } else {
+                        alert(response.message || 'Error al actualizar la contraseña');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('Error al actualizar la contraseña. Por favor, intente nuevamente.');
                 }
             });
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
+        function mostrarMensajeModal(mensaje) {
+            $('#mensajeModalBody').text(mensaje);
+            var modal = new bootstrap.Modal(document.getElementById('mensajeModal'));
+            modal.show();
         }
     </script>
 } 

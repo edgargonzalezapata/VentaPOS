@@ -279,7 +279,7 @@ namespace VentaPOS.Controllers
                                 }
                                 else
                                 {
-                                // Si es un empleado (cajero, atendedor, etc.), redirigir a la lista de ventas
+                                // Si es un usuario (cajero, atendedor, etc.), redirigir a la lista de ventas
                                 return RedirectToAction("ListaVentas", "Ventas");
                             }
                         }
@@ -432,15 +432,15 @@ namespace VentaPOS.Controllers
                     {
                         s.MaxUsuarios,
                         Plan = s.Plan,
-                        UsuariosCount = s.Usuarios.Count
+                        UsuariosCount = _context.Usuarios.Count(u => u.EmpresaRut == empresaRut && u.Activo)
                     })
                     .FirstOrDefaultAsync();
 
                 if (suscripcionActiva != null)
                 {
-            ViewBag.PuedeCrearUsuarios = usuarios.Count < suscripcionActiva.MaxUsuarios;
+                    ViewBag.PuedeCrearUsuarios = suscripcionActiva.UsuariosCount < suscripcionActiva.MaxUsuarios;
             ViewBag.MaxUsuarios = suscripcionActiva.MaxUsuarios;
-            ViewBag.UsuariosActuales = usuarios.Count;
+                    ViewBag.UsuariosActuales = suscripcionActiva.UsuariosCount;
             ViewBag.Plan = suscripcionActiva.Plan.Nombre;
                 }
                 else
@@ -644,25 +644,95 @@ namespace VentaPOS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearUsuario([FromBody] Usuario usuario)
         {
-            if (ModelState.IsValid)
+            try
             {
-                try
+                if (string.IsNullOrEmpty(usuario.Nombre))
+                    return Json(new { success = false, message = "El nombre es requerido" });
+
+                if (string.IsNullOrEmpty(usuario.Correo))
+                    return Json(new { success = false, message = "El correo es requerido" });
+
+                // Verificar si el correo ya está registrado y activo
+            var usuarioExistente = await _context.Usuarios
+                    .Include(u => u.Empresa)
+                    .FirstOrDefaultAsync(u => u.Correo == usuario.Correo && u.Activo);
+
+            if (usuarioExistente != null)
+            {
+                    return Json(new { success = false, message = $"El correo electrónico ya está registrado y activo en la empresa {usuarioExistente.Empresa.NombreEmpresa}" });
+                }
+
+                // Si existe el correo pero está inactivo, verificar que no sea en la misma empresa
+                var usuarioInactivo = await _context.Usuarios
+                    .Include(u => u.Empresa)
+                    .FirstOrDefaultAsync(u => u.Correo == usuario.Correo && !u.Activo && u.EmpresaRut == usuario.EmpresaRut);
+                
+                if (usuarioInactivo != null)
                 {
-                    usuario.FechaRegistro = DateTime.Now;
-                    usuario.Activo = true;
-                    usuario.Contraseña = Encoding.UTF8.GetBytes(HashPassword("123456")); // Contraseña temporal
+                    return Json(new { success = false, message = $"El correo electrónico ya existe como usuario inactivo en tu empresa. Por favor, reactiva el usuario existente en lugar de crear uno nuevo." });
+                }
 
-                    _context.Usuarios.Add(usuario);
-                    await _context.SaveChangesAsync();
+                // Verificar si la empresa existe
+                var empresa = await _context.Empresas.FindAsync(usuario.EmpresaRut);
+                if (empresa == null)
+                    return Json(new { success = false, message = "La empresa no existe" });
 
-                    return Json(new { success = true, message = "Usuario creado exitosamente" });
+                // Verificar límite de usuarios según el plan
+                var suscripcionActiva = await _context.Suscripciones
+                    .Where(s => s.EmpresaRut == usuario.EmpresaRut && s.Activa)
+                    .FirstOrDefaultAsync();
+
+                if (suscripcionActiva == null)
+                    return Json(new { success = false, message = "No hay una suscripción activa" });
+
+                var usuariosActivos = await _context.Usuarios
+                    .CountAsync(u => u.EmpresaRut == usuario.EmpresaRut && u.Activo);
+
+                if (usuariosActivos >= suscripcionActiva.MaxUsuarios)
+                    return Json(new { success = false, message = "Ha alcanzado el límite de usuarios para su plan actual" });
+
+                // Crear el nuevo usuario
+                var nuevoUsuario = new Usuario
+                {
+                    Nombre = usuario.Nombre,
+                    Correo = usuario.Correo,
+                    Telefono = usuario.Telefono,
+                    EmpresaRut = usuario.EmpresaRut,
+                    FechaRegistro = DateTime.Now,
+                    Activo = true,
+                    Contraseña = Encoding.UTF8.GetBytes(HashPassword("123456"))
+                };
+
+                // Procesar roles
+                if (usuario.Rols != null && usuario.Rols.Any())
+                {
+                    var roleIds = usuario.Rols.Select(r => r.RolId).ToList();
+                    var roles = await _context.Roles
+                        .Where(r => roleIds.Contains(r.RolId) && r.EmpresaRut == usuario.EmpresaRut)
+                        .ToListAsync();
+
+                    nuevoUsuario.Rols = new List<Roles>();
+                    foreach (var rol in roles)
+                    {
+                        nuevoUsuario.Rols.Add(rol);
+                    }
+                }
+
+                // Agregar el usuario a la base de datos
+                _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+                // Asociar el usuario con la suscripción activa
+                nuevoUsuario.Suscripciones = new List<Suscripciones> { suscripcionActiva };
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Usuario creado exitosamente" });
             }
             catch (Exception ex)
             {
-                    return Json(new { success = false, message = "Error al crear el usuario: " + ex.Message });
-                }
+                _logger.LogError(ex, "Error al crear usuario");
+                return Json(new { success = false, message = "Error al crear el usuario: " + ex.Message });
             }
-            return Json(new { success = false, message = "Datos inválidos" });
         }
 
         // POST: Usuarios/ActualizarUsuario
@@ -670,32 +740,60 @@ namespace VentaPOS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActualizarUsuario([FromBody] Usuario usuario)
         {
-            if (ModelState.IsValid)
+            try
             {
-                try
+                if (string.IsNullOrEmpty(usuario.Nombre))
+                    return Json(new { success = false, message = "El nombre es requerido" });
+
+                if (string.IsNullOrEmpty(usuario.Correo))
+                    return Json(new { success = false, message = "El correo es requerido" });
+
+                var usuarioExistente = await _context.Usuarios
+                    .Include(u => u.Rols)
+                    .FirstOrDefaultAsync(u => u.UsuarioId == usuario.UsuarioId);
+
+                if (usuarioExistente == null)
+                    return Json(new { success = false, message = "Usuario no encontrado" });
+
+                // Verificar si el correo ya está en uso por otro usuario
+                var existeCorreo = await _context.Usuarios
+                    .AnyAsync(u => u.Correo == usuario.Correo && u.UsuarioId != usuario.UsuarioId);
+                if (existeCorreo)
+                    return Json(new { success = false, message = "El correo electrónico ya está en uso por otro usuario" });
+
+                // Actualizar propiedades básicas
+                usuarioExistente.Nombre = usuario.Nombre;
+                usuarioExistente.Correo = usuario.Correo;
+                usuarioExistente.Telefono = usuario.Telefono;
+                usuarioExistente.Activo = usuario.Activo;
+
+                // Actualizar roles si se proporcionaron
+                if (usuario.Rols != null && usuario.Rols.Any())
                 {
-                    var usuarioExistente = await _context.Usuarios.FindAsync(usuario.UsuarioId);
-                    if (usuarioExistente == null)
+                    // Limpiar roles existentes
+                    usuarioExistente.Rols.Clear();
+
+                    // Obtener los roles de la base de datos
+                    var roleIds = usuario.Rols.Select(r => r.RolId).ToList();
+                    var roles = await _context.Roles
+                        .Where(r => roleIds.Contains(r.RolId))
+                .ToListAsync();
+
+                    // Asignar nuevos roles
+                    foreach (var rol in roles)
                     {
-                        return Json(new { success = false, message = "Usuario no encontrado" });
+                        usuarioExistente.Rols.Add(rol);
                     }
-
-                    usuarioExistente.Nombre = usuario.Nombre;
-                    usuarioExistente.Correo = usuario.Correo;
-                    usuarioExistente.Telefono = usuario.Telefono;
-                    usuarioExistente.Activo = usuario.Activo;
-
-                    _context.Update(usuarioExistente);
-            await _context.SaveChangesAsync();
-
-                    return Json(new { success = true, message = "Usuario actualizado exitosamente" });
                 }
-                catch (Exception ex)
-                {
-                    return Json(new { success = false, message = "Error al actualizar el usuario: " + ex.Message });
-                }
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, message = "Usuario actualizado exitosamente" });
             }
-            return Json(new { success = false, message = "Datos inválidos" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar usuario");
+                return Json(new { success = false, message = "Error al actualizar el usuario: " + ex.Message });
+            }
         }
 
         // POST: Usuarios/EliminarUsuario
@@ -711,13 +809,17 @@ namespace VentaPOS.Controllers
 
             try
             {
-                _context.Usuarios.Remove(usuario);
+                // Realizar eliminación lógica
+                usuario.Activo = false;
+                _context.Update(usuario);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Usuario eliminado exitosamente" });
+
+                return Json(new { success = true, message = "Usuario desactivado exitosamente" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error al eliminar el usuario: " + ex.Message });
+                _logger.LogError(ex, "Error al desactivar usuario");
+                return Json(new { success = false, message = "Error al desactivar el usuario: " + ex.Message });
             }
         }
 
@@ -753,9 +855,9 @@ namespace VentaPOS.Controllers
             {
                 _logger.LogInformation($"Iniciando suscripción para planId: {planId}");
                 
-                var empresaRut = HttpContext.Session.GetString("EmpresaRut");
-                if (string.IsNullOrEmpty(empresaRut))
-                {
+            var empresaRut = HttpContext.Session.GetString("EmpresaRut");
+            if (string.IsNullOrEmpty(empresaRut))
+            {
                     _logger.LogWarning("Sesión expirada al intentar suscribir plan");
                     return Json(new { success = false, message = "Sesión expirada. Por favor, inicie sesión nuevamente." });
                 }
@@ -769,32 +871,32 @@ namespace VentaPOS.Controllers
                 }
 
                 // Desactivar suscripciones anteriores
-                var suscripcionesAnteriores = await _context.Suscripciones
+                    var suscripcionesAnteriores = await _context.Suscripciones
                     .Where(s => s.EmpresaRut == empresaRut && s.Activa)
-                    .ToListAsync();
+                        .ToListAsync();
 
-                foreach (var suscripcion in suscripcionesAnteriores)
-                {
-                    suscripcion.Activa = false;
+                    foreach (var suscripcion in suscripcionesAnteriores)
+                    {
+                        suscripcion.Activa = false;
                     suscripcion.FechaFin = DateTime.Now;
                     _context.Update(suscripcion);
                 }
 
                 // Crear nueva suscripción
-                var nuevaSuscripcion = new Suscripciones
-                {
-                    EmpresaRut = empresaRut,
+                    var nuevaSuscripcion = new Suscripciones
+                    {
+                        EmpresaRut = empresaRut,
                     PlanID = planId,
-                    FechaInicio = DateTime.Now,
-                    FechaFin = DateTime.Now.AddMonths(1),
-                    FormaPago = "Pendiente",
-                    Pagado = false,
+                        FechaInicio = DateTime.Now,
+                        FechaFin = DateTime.Now.AddMonths(1),
+                        FormaPago = "Pendiente",
+                        Pagado = false,
                     Activa = false, // Se activará después del pago
-                    MaxUsuarios = plan.MaxUsuarios ?? 1
-                };
+                        MaxUsuarios = plan.MaxUsuarios ?? 1
+                    };
 
-                _context.Suscripciones.Add(nuevaSuscripcion);
-                await _context.SaveChangesAsync();
+                    _context.Suscripciones.Add(nuevaSuscripcion);
+                    await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Nueva suscripción creada: {nuevaSuscripcion.SuscripcionID}");
 
@@ -857,8 +959,8 @@ namespace VentaPOS.Controllers
         {
             try
             {
-                var suscripcion = await _context.Suscripciones
-                    .Include(s => s.Plan)
+            var suscripcion = await _context.Suscripciones
+                .Include(s => s.Plan)
                     .FirstOrDefaultAsync(s => s.SuscripcionID == suscripcionId);
 
                 if (suscripcion == null)

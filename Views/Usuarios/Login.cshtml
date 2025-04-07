@@ -304,9 +304,9 @@
                     }
             
             <div class="type-selector mb-4">
-                <label class="type-option" id="empleadoOption">
-                    <input class="visually-hidden" type="radio" id="tipoEmpleado" asp-for="TipoUsuario" value="Empleado" checked />
-                    <i class="bi bi-person-fill me-2"></i> Empleado
+                <label class="type-option" id="usuarioOption">
+                    <input class="visually-hidden" type="radio" id="tipoUsuario" asp-for="TipoUsuario" value="Usuario" checked />
+                    <i class="bi bi-person-fill me-2"></i> Usuario
                 </label>
                 <label class="type-option" id="empresaOption">
                     <input class="visually-hidden" type="radio" id="tipoEmpresa" asp-for="TipoUsuario" value="Empresa" />
@@ -390,18 +390,18 @@
         }
 
         // Selección de tipo de usuario
-        const empleadoOption = document.getElementById('empleadoOption');
+        const usuarioOption = document.getElementById('usuarioOption');
         const empresaOption = document.getElementById('empresaOption');
-        const tipoEmpleado = document.getElementById('tipoEmpleado');
+        const tipoUsuario = document.getElementById('tipoUsuario');
         const tipoEmpresa = document.getElementById('tipoEmpresa');
 
         // Función para actualizar estilos de selección
         function updateTypeSelection() {
-            if (tipoEmpleado.checked) {
-                empleadoOption.classList.add('active');
+            if (tipoUsuario.checked) {
+                usuarioOption.classList.add('active');
                 empresaOption.classList.remove('active');
             } else {
-                empleadoOption.classList.remove('active');
+                usuarioOption.classList.remove('active');
                 empresaOption.classList.add('active');
             }
         }
@@ -444,11 +444,11 @@
 
         // Agregar event listeners
         tipoEmpresa.addEventListener('change', cambiarTipoEntrada);
-        tipoEmpleado.addEventListener('change', cambiarTipoEntrada);
+        tipoUsuario.addEventListener('change', cambiarTipoEntrada);
         
         // Evento para los contenedores
-        empleadoOption.addEventListener('click', function() {
-            tipoEmpleado.checked = true;
+        usuarioOption.addEventListener('click', function() {
+            tipoUsuario.checked = true;
             cambiarTipoEntrada();
         });
         

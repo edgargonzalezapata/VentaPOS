@@ -5,75 +5,119 @@
     Layout = "_PanelLayout";
 }
 
-<div class="tw-container tw-mx-auto tw-px-6 tw-py-8">
-    <h1 class="tw-text-3xl tw-font-bold tw-mb-6">Categorías</h1>
-    
-    <div class="tw-flex tw-gap-4 tw-mb-6">
-        <button id="btnNuevaCategoria" class="tw-bg-blue-600 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg tw-flex tw-items-center tw-gap-2 tw-hover:bg-blue-700 tw-transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            Nueva Categoría
-        </button>
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
 
-        <form asp-action="InicializarCategorias" method="post" class="tw-inline">
-            <button type="submit" class="tw-bg-green-600 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg tw-flex tw-items-center tw-gap-2 tw-hover:bg-green-700 tw-transition-colors" onclick="return confirm('¿Estás seguro de que deseas inicializar las categorías predeterminadas?');">
-                <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
-                </svg>
-                Inicializar Categorías
-            </button>
-        </form>
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 3;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 3;
+            display: none;
+        }
+
+        .search-input {
+            padding-left: 2.5rem !important;
+            padding-right: 2.5rem !important;
+            border-radius: 0.5rem;
+        }
+        
+        /* Ocultar el campo de búsqueda de DataTables */
+        .dataTables_filter {
+            display: none !important;
+        }
+        
+        /* Ocultar la barra inferior de DataTables */
+        .dataTables_info, .dataTables_paginate {
+            display: none !important;
+        }
+    </style>
+}
+
+<div class="container p-4">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2">Gestión de Categorías</h1>
+                <p class="lead">Administra y organiza las categorías de tus productos</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" id="btnNuevaCategoria">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nueva Categoría
+                </button>
+                <form asp-action="InicializarCategorias" method="post" class="d-inline" id="formInicializar">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-success" id="btnInicializar">
+                        <i class="bi bi-grid me-2"></i>
+                        Inicializar Categorías
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
-    @if (TempData["Mensaje"] != null)
-    {
-        <div class="tw-bg-green-100 tw-border-l-4 tw-border-green-500 tw-text-green-700 tw-p-4 tw-mb-4" role="alert">
-            <p class="tw-font-bold">Éxito</p>
-            <p>@TempData["Mensaje"]</p>
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="search-wrapper">
+                <div class="search-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+                <input type="text" 
+                       id="buscarCategoria" 
+                       class="form-control form-control-lg search-input" 
+                       placeholder="Buscar categoría por nombre o descripción...">
+                <div class="clear-search" id="searchClearButton">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+            </div>
         </div>
-    }
+    </div>
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="tw-bg-red-100 tw-border-l-4 tw-border-red-500 tw-text-red-700 tw-p-4 tw-mb-4" role="alert">
-            <p class="tw-font-bold">Error</p>
-            <p>@TempData["Error"]</p>
-        </div>
-    }
-
-    <div class="tw-bg-white tw-rounded-lg tw-shadow-md tw-overflow-hidden">
-        <div class="tw-bg-gray-50 tw-px-6 tw-py-4 tw-border-b tw-border-gray-200">
-            <h2 class="tw-text-xl tw-font-semibold tw-text-gray-800">Lista de Categorías</h2>
-        </div>
-        <div class="tw-p-6">
-            <div class="tw-overflow-x-auto">
-                <table class="tw-min-w-full tw-divide-y tw-divide-gray-200">
-                    <thead class="tw-bg-gray-50">
+    <!-- Tabla de Categorías -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="categoriasTable">
+                    <thead class="table-light">
                         <tr>
-                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Nombre</th>
-                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Descripción</th>
-                            <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider">Acciones</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="tw-bg-white tw-divide-y tw-divide-gray-200">
+                    <tbody>
                         @foreach (var item in Model)
                         {
-                            <tr class="hover:tw-bg-gray-50">
-                                <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap">@item.Nombre</td>
-                                <td class="tw-px-6 tw-py-4">@item.Descripcion</td>
-                                <td class="tw-px-6 tw-py-4 tw-whitespace-nowrap tw-flex tw-gap-2">
-                                    <button onclick="editarCategoria(@item.CategoriaID)" class="tw-bg-yellow-500 tw-text-white tw-px-3 tw-py-1 tw-rounded tw-text-sm tw-hover:bg-yellow-600 tw-transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-4 tw-w-4 tw-inline" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                        </svg>
-                                        Editar
+                            <tr>
+                                <td>@item.Nombre</td>
+                                <td>@item.Descripcion</td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editarCategoria(@item.CategoriaID)">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button onclick="eliminarCategoria(@item.CategoriaID)" class="tw-bg-red-500 tw-text-white tw-px-3 tw-py-1 tw-rounded tw-text-sm tw-hover:bg-red-600 tw-transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-4 tw-w-4 tw-inline" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                        Eliminar
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarCategoria(@item.CategoriaID)">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -83,143 +127,286 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal para crear/editar categoría -->
-    <div id="categoriaModal" class="tw-hidden tw-fixed tw-inset-0 tw-z-50">
-        <!-- Overlay -->
-        <div class="tw-fixed tw-inset-0 tw-bg-gray-900 tw-bg-opacity-50 tw-transition-opacity"></div>
-        
-        <!-- Modal -->
-        <div class="tw-fixed tw-inset-0 tw-z-50 tw-overflow-y-auto">
-            <div class="tw-flex tw-min-h-full tw-items-center tw-justify-center tw-p-4">
-                <div class="tw-relative tw-w-full tw-max-w-md tw-transform tw-overflow-hidden tw-rounded-2xl tw-bg-white tw-p-6 tw-text-left tw-shadow-xl tw-transition-all">
-                    <!-- Header -->
-                    <div class="tw-flex tw-items-center tw-justify-between tw-mb-5">
-                        <h3 class="tw-text-xl tw-font-semibold tw-text-gray-900 tw-leading-6" id="modalTitle">
-                            Nueva Categoría
-                        </h3>
-                        <button type="button" onclick="cerrarModal()" class="tw-rounded-full tw-p-1 tw-text-gray-400 hover:tw-text-gray-500 focus:tw-outline-none">
-                            <svg class="tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+<!-- Modal para crear/editar categoría -->
+<div class="modal fade" id="categoriaModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Nueva Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoriaForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="categoriaId" value="0" />
+                    
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="100">
                     </div>
 
-                    <!-- Formulario -->
-                    <form id="categoriaForm" class="tw-space-y-6">
-                        <input type="hidden" id="categoriaId" value="0" />
-                        
-                        <!-- Campo Nombre -->
-                        <div>
-                            <label for="nombre" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">
-                                Nombre
-                            </label>
-                            <div class="tw-mt-1">
-                                <input type="text" id="nombre" name="nombre" required
-                                       class="tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500 tw-text-sm
-                                              tw-border tw-p-2.5 tw-bg-gray-50 hover:tw-bg-white">
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" maxlength="500"></textarea>
+                    </div>
 
-                        <!-- Campo Descripción -->
-                        <div>
-                            <label for="descripcion" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700">
-                                Descripción
-                            </label>
-                            <div class="tw-mt-1">
-                                <textarea id="descripcion" name="descripcion" rows="3"
-                                        class="tw-block tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-blue-500 focus:tw-ring-blue-500 tw-text-sm
-                                               tw-border tw-p-2.5 tw-bg-gray-50 hover:tw-bg-white"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="tw-flex tw-justify-end tw-gap-3 tw-mt-6">
-                            <button type="button" onclick="cerrarModal()"
-                                    class="tw-inline-flex tw-justify-center tw-rounded-md tw-border tw-border-gray-300 tw-bg-white tw-px-4 tw-py-2 tw-text-sm tw-font-medium 
-                                           tw-text-gray-700 tw-shadow-sm hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-gray-500 focus:tw-ring-offset-2">
-                                Cancelar
-                            </button>
-                            <button type="submit"
-                                    class="tw-inline-flex tw-justify-center tw-rounded-md tw-border tw-border-transparent tw-bg-blue-600 tw-px-4 tw-py-2 tw-text-sm tw-font-medium 
-                                           tw-text-white tw-shadow-sm hover:tw-bg-blue-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-ring-offset-2
-                                           tw-transition-colors">
-                                Guardar cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        let antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    <!-- DataTables -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
-        document.getElementById('btnNuevaCategoria').addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Nueva Categoría';
-            document.getElementById('categoriaId').value = '0';
-            document.getElementById('nombre').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('categoriaModal').classList.remove('tw-hidden');
+    <script>
+        // Variables globales
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        let categoriaModal;
+        let dataTable;
+
+        // Inicialización cuando el DOM está listo
+        $(document).ready(function () {
+            // Inicializar el modal
+            categoriaModal = new bootstrap.Modal(document.getElementById('categoriaModal'));
+            
+            // Inicializar DataTable
+            dataTable = $('#categoriasTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                responsive: true,
+                paging: false,
+                info: false,
+                searching: true,
+                order: [[0, 'asc']], // Ordenar por nombre por defecto
+                columnDefs: [
+                    { targets: -1, orderable: false } // Última columna (acciones) no ordenable
+                ],
+                dom: 't' // Solo muestra la tabla (t)
+            });
+
+            // Configurar barra de búsqueda personalizada
+            const searchInput = document.getElementById('buscarCategoria');
+            const searchClearButton = document.getElementById('searchClearButton');
+
+            searchInput.addEventListener('input', function(e) {
+                const hasValue = e.target.value.length > 0;
+                searchClearButton.style.display = hasValue ? 'block' : 'none';
+                
+                // Aplicar filtro a DataTable
+                dataTable.search(this.value).draw();
+            });
+
+            searchClearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClearButton.style.display = 'none';
+                searchInput.focus();
+                dataTable.search('').draw();
+            });
+
+            // Event listener para nueva categoría
+            $('#btnNuevaCategoria').on('click', function() {
+                document.getElementById('modalTitle').textContent = 'Nueva Categoría';
+                document.getElementById('categoriaId').value = '0';
+                document.getElementById('categoriaForm').reset();
+                categoriaModal.show();
+            });
+
+            // Event listener para inicializar categorías
+            $('#btnInicializar').on('click', function() {
+                confirmarInicializacion();
+            });
+
+            // Event listener para el formulario
+            $('#categoriaForm').on('submit', handleSubmit);
         });
 
-        function cerrarModal() {
-            document.getElementById('categoriaModal').classList.add('tw-hidden');
+        // Confirmar inicialización de categorías
+        function confirmarInicializacion() {
+            Swal.fire({
+                title: '¿Inicializar categorías predeterminadas?',
+                text: "Esto creará un conjunto de categorías predefinidas para el sistema.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, inicializar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('formInicializar').submit();
+                }
+            });
         }
 
+        // Función para editar categoría
         async function editarCategoria(id) {
             try {
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Cargando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 const response = await fetch(`/Categoria/Edit/${id}`);
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                
                 const data = await response.json();
+                Swal.close();
+                
                 if (data.success) {
                     document.getElementById('modalTitle').textContent = 'Editar Categoría';
                     document.getElementById('categoriaId').value = data.categoria.categoriaID;
                     document.getElementById('nombre').value = data.categoria.nombre;
                     document.getElementById('descripcion').value = data.categoria.descripcion;
-                    document.getElementById('categoriaModal').classList.remove('tw-hidden');
+                    categoriaModal.show();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Error al cargar la categoría'
+                    });
                 }
             } catch (error) {
                 console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al cargar la categoría'
+                });
             }
         }
 
+        // Función para eliminar categoría
         async function eliminarCategoria(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta categoría?')) {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer y podría afectar a los productos asociados.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
                 try {
-                    const response = await fetch('/Categoria/Delete', {
+                    // Mostrar indicador de carga
+                    Swal.fire({
+                        title: 'Eliminando categoría...',
+                        text: 'Por favor espere',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    const formData = new FormData();
+                    formData.append('id', id);
+                    formData.append('__RequestVerificationToken', antiForgeryToken);
+                    
+                    const response = await fetch('/Categoria/Delete/' + id, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'RequestVerificationToken': antiForgeryToken
                         },
-                        body: JSON.stringify(id)
+                        body: formData
                     });
-                    const data = await response.json();
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.message);
+                    
+                    if (!response.ok) {
+                        const text = await response.text();
+                        console.error('Error en eliminación:', text);
+                        throw new Error('Error al eliminar la categoría');
                     }
+                    
+                    // Actualizar la tabla
+                    window.location.reload();
+                    
+                    // Mostrar notificación de éxito
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Categoría eliminada correctamente'
+                    });
                 } catch (error) {
                     console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Error al eliminar la categoría',
+                        confirmButtonText: 'Entendido'
+                    });
                 }
             }
         }
 
-        document.getElementById('categoriaForm').addEventListener('submit', async (e) => {
+        // Función para manejar el envío del formulario
+        async function handleSubmit(e) {
             e.preventDefault();
-            const categoriaId = document.getElementById('categoriaId').value;
-            const categoria = {
-                categoriaID: parseInt(categoriaId),
-                nombre: document.getElementById('nombre').value,
-                descripcion: document.getElementById('descripcion').value
-            };
-
+            
             try {
-                const response = await fetch(categoriaId === '0' ? '/Categoria/Create' : '/Categoria/Update', {
+                const categoriaId = document.getElementById('categoriaId').value;
+                const categoria = {
+                    categoriaID: parseInt(categoriaId),
+                    nombre: document.getElementById('nombre').value.trim(),
+                    descripcion: document.getElementById('descripcion').value.trim()
+                };
+
+                // Validaciones básicas
+                if (!categoria.nombre) {
+                    throw new Error('Por favor ingrese un nombre para la categoría');
+                }
+
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Guardando cambios...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const esNueva = categoriaId === '0';
+                const url = esNueva ? '/Categoria/Create' : '/Categoria/Update';
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -227,27 +414,51 @@
                     },
                     body: JSON.stringify(categoria)
                 });
-                const data = await response.json();
-                if (data.success) {
-                    location.reload();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (parseError) {
+                    console.error('Error al procesar la respuesta:', parseError);
+                    throw new Error('Error al procesar la respuesta del servidor');
+                }
+
+                if (response.ok && result.success) {
+                    // Cerrar el modal
+                    categoriaModal.hide();
+                    
+                    // Recargar la página para actualizar la tabla
+                    window.location.reload();
+
+                    // Mostrar notificación de éxito
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+
+                    Toast.fire({
+                        icon: 'success',
+                        title: esNueva ? 'Categoría creada correctamente' : 'Categoría actualizada correctamente'
+                    });
                 } else {
-                    alert(data.message);
+                    throw new Error(result.message || 'Error al guardar la categoría');
                 }
             } catch (error) {
                 console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Error al guardar la categoría',
+                    confirmButtonText: 'Entendido'
+                });
             }
-        });
-
-        // DataTables initialization with Tailwind classes
-        $(document).ready(function () {
-            $('table').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
-                },
-                dom: '<"tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-mb-4"<"tw-flex tw-flex-col md:tw-flex-row md:tw-items-center"l<"tw-ml-0 md:tw-ml-4"f>>><"tw-overflow-x-auto"t><"tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-mt-4"<"tw-mb-4 md:tw-mb-0"i><"tw-flex tw-justify-center md:tw-justify-end"p>>',
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                pageLength: 10
-            });
-        });
+        }
     </script>
 } 

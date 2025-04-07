@@ -23,87 +23,108 @@ namespace VentaPOS.Controllers
         }
 
         // GET: Productos
-        public async Task<IActionResult> Index(string searchTerm, int? categoriaID, decimal? precioMin, 
-            decimal? precioMax, string stockFilter, string ordenarPor)
+        public async Task<IActionResult> Index()
         {
             var empresaRut = HttpContext.Session.GetString("EmpresaRut");
-            
-            // Guardar filtros en ViewBag para mantenerlos en la vista
-            ViewBag.SearchTerm = searchTerm;
-            ViewBag.CategoriaID = categoriaID;
-            ViewBag.PrecioMin = precioMin;
-            ViewBag.PrecioMax = precioMax;
-            ViewBag.StockFilter = stockFilter;
-            ViewBag.OrdenarPor = ordenarPor;
-            
-            var query = _context.Productos
-                .Include(p => p.Categoria)
-                .Where(p => p.EmpresaRut == empresaRut);
+            if (string.IsNullOrEmpty(empresaRut))
+            {
+                return RedirectToAction("Login", "Usuarios");
+            }
 
-            // Filtro por texto (nombre o código)
-            if (!string.IsNullOrEmpty(searchTerm))
+            var viewModel = new ProductosIndexVM
             {
-                query = query.Where(p => 
-                    EF.Functions.Like(p.Nombre, $"%{searchTerm}%") ||
-                    EF.Functions.Like(p.Codigo, $"%{searchTerm}%") ||
-                    (p.Descripcion != null && EF.Functions.Like(p.Descripcion, $"%{searchTerm}%"))
-                );
-            }
-            
-            // Filtro por categoría
-            if (categoriaID.HasValue)
-            {
-                query = query.Where(p => p.CategoriaID == categoriaID.Value);
-            }
-            
-            // Filtro por rango de precio
-            if (precioMin.HasValue)
-            {
-                query = query.Where(p => p.Precio >= precioMin.Value);
-            }
-            
-            if (precioMax.HasValue)
-            {
-                query = query.Where(p => p.Precio <= precioMax.Value);
-            }
-            
-            // Filtro por stock
-            switch (stockFilter)
-            {
-                case "disponible":
-                    query = query.Where(p => p.Stock > 0);
-                    break;
-                case "agotado":
-                    query = query.Where(p => p.Stock <= 0);
-                    break;
-                case "bajo":
-                    query = query.Where(p => p.Stock > 0 && p.Stock < 10);
-                    break;
-            }
-            
-            // Ordenamiento
-            query = ordenarPor switch
-            {
-                "nombre" => query.OrderBy(p => p.Nombre),
-                "nombre_desc" => query.OrderByDescending(p => p.Nombre),
-                "precio_asc" => query.OrderBy(p => p.Precio),
-                "precio_desc" => query.OrderByDescending(p => p.Precio),
-                "stock_asc" => query.OrderBy(p => p.Stock),
-                "stock_desc" => query.OrderByDescending(p => p.Stock),
-                "categoria" => query.OrderBy(p => p.Categoria.Nombre),
-                _ => query.OrderBy(p => p.Nombre)
-            };
-
-            var model = new ProductosIndexVM
-            {
-                Productos = await query.ToListAsync(),
+                Productos = await _context.Productos
+                    .Include(p => p.Categoria)
+                    .Where(p => p.EmpresaRut == empresaRut)
+                    .OrderBy(p => p.Nombre)
+                    .ToListAsync(),
                 Categorias = await _context.Categorias
                     .Where(c => c.EmpresaRut == empresaRut)
                     .OrderBy(c => c.Nombre)
                     .ToListAsync()
             };
 
-            return View(model);
+            return View(viewModel);
+        }
+
+        // POST: Productos/Buscar
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Buscar([FromBody] FiltroProductoVM filtro)
+        {
+            var empresaRut = HttpContext.Session.GetString("EmpresaRut");
+            if (string.IsNullOrEmpty(empresaRut))
+            {
+                return Json(new { success = false, message = "Sesión no válida" });
+            }
+
+            try
+            {
+                _logger.LogInformation("Iniciando búsqueda de productos. Filtros: {@Filtro}", filtro);
+
+                // Consulta base
+                var query = _context.Productos
+                    .Include(p => p.Categoria)
+                    .Where(p => p.EmpresaRut == empresaRut)
+                    .AsNoTracking(); // Mejora el rendimiento para consultas de solo lectura
+
+                // Aplicar filtros
+                query = AplicarFiltros(query, filtro);
+
+                // Ejecutar la consulta y transformar resultados
+                var productos = await query
+                    .OrderBy(p => p.Nombre)
+                    .Select(p => new
+                    {
+                        p.ProductoID,
+                        p.Codigo,
+                        p.Nombre,
+                        p.Descripcion,
+                        Precio = $"${p.Precio:N0}",
+                        p.Stock,
+                        Categoria = p.Categoria.Nombre,
+                        UltimaActualizacion = p.UltimaActualizacion.HasValue ?
+                            p.UltimaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-"
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation("Búsqueda completada. Encontrados {Count} productos", productos.Count);
+
+                return Json(new
+                {
+                    success = true,
+                    data = productos,
+                    totalRegistros = productos.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al buscar productos");
+                return Json(new { success = false, message = "Error al buscar productos" });
+            }
+        }
+
+        private static IQueryable<Producto> AplicarFiltros(IQueryable<Producto> query, FiltroProductoVM filtro)
+        {
+            if (filtro == null) return query;
+
+            // Filtro por categoría
+            if (filtro.CategoriaId.HasValue)
+            {
+                query = query.Where(p => p.CategoriaID == filtro.CategoriaId);
+            }
+
+            // Filtro por texto (descripción, nombre o código)
+            if (!string.IsNullOrWhiteSpace(filtro.Descripcion))
+            {
+                var searchTerm = filtro.Descripcion.Trim().ToLower();
+                query = query.Where(p =>
+                    EF.Functions.Like(p.Descripcion.ToLower(), $"%{searchTerm}%") ||
+                    EF.Functions.Like(p.Nombre.ToLower(), $"%{searchTerm}%") ||
+                    EF.Functions.Like(p.Codigo.ToLower(), $"%{searchTerm}%"));
+            }
+
+            return query;
         }
 
         // GET: Productos/Create
@@ -227,6 +248,7 @@ namespace VentaPOS.Controllers
         }
 
         // GET: Productos/Edit/5
+        [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -248,71 +270,46 @@ namespace VentaPOS.Controllers
                 return NotFound();
             }
 
-            ViewData["CategoriaID"] = new SelectList(
-                await _context.Categorias
-                    .Where(c => c.EmpresaRut == empresaRut)
-                    .OrderBy(c => c.Nombre)
-                    .ToListAsync(), 
-                "CategoriaID", 
-                "Nombre", 
-                producto.CategoriaID
-            );
-
-            return View(producto);
+            return Json(new { success = true, producto = producto });
         }
 
-        // POST: Productos/Edit/5
+        // POST: Productos/Update
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductoID,Codigo,Nombre,Descripcion,Precio,Stock,CategoriaID,EmpresaRut")] Producto producto)
+        public async Task<IActionResult> Update([FromBody] Producto producto)
         {
-            if (id != producto.ProductoID)
-            {
-                return NotFound();
-            }
-
             var empresaRut = HttpContext.Session.GetString("EmpresaRut");
             if (string.IsNullOrEmpty(empresaRut))
             {
-                return RedirectToAction("Login", "Usuarios");
+                return Json(new { success = false, message = "Sesión no válida" });
             }
 
-            producto.EmpresaRut = empresaRut;
-            producto.UltimaActualizacion = DateTime.Now;
-
-            if (ModelState.IsValid)
+            try
             {
-                try
+                var productoExistente = await _context.Productos
+                    .FirstOrDefaultAsync(p => p.ProductoID == producto.ProductoID && p.EmpresaRut == empresaRut);
+
+                if (productoExistente == null)
                 {
-                    _context.Update(producto);
-                    await _context.SaveChangesAsync();
-                    TempData["Mensaje"] = "Producto actualizado exitosamente.";
-                    return RedirectToAction(nameof(Index));
+                    return Json(new { success = false, message = "Producto no encontrado" });
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductoExists(producto.ProductoID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+
+                // Actualizar los campos
+                productoExistente.Codigo = producto.Codigo;
+                productoExistente.Nombre = producto.Nombre;
+                productoExistente.Descripcion = producto.Descripcion;
+                productoExistente.Precio = producto.Precio;
+                productoExistente.Stock = producto.Stock;
+                productoExistente.CategoriaID = producto.CategoriaID;
+                productoExistente.UltimaActualizacion = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
             }
-
-            ViewData["CategoriaID"] = new SelectList(
-                await _context.Categorias
-                    .Where(c => c.EmpresaRut == empresaRut)
-                    .OrderBy(c => c.Nombre)
-                    .ToListAsync(), 
-                "CategoriaID", 
-                "Nombre", 
-                producto.CategoriaID
-            );
-
-            return View(producto);
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         // POST: Productos/Delete/5

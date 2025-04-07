@@ -24,9 +24,17 @@ namespace VentaPOS.Controllers
 
         public async Task<IActionResult> Index(DateTime? fechaInicio, DateTime? fechaFin, int? clienteID)
         {
-            // Establecer valores por defecto si no vienen en la solicitud
-            fechaInicio ??= new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            fechaFin ??= DateTime.Now.Date.AddDays(1).AddTicks(-1); // Hasta el final del día actual
+            // Establecer valores por defecto para mostrar las ventas del día actual
+            if (!fechaInicio.HasValue && !fechaFin.HasValue)
+            {
+                // Si no se proporcionan fechas, mostrar el día actual
+                fechaInicio = DateTime.Now.Date;
+                fechaFin = DateTime.Now.Date;
+            }
+
+            // Asegurar que las fechas incluyan el día completo
+            var startDate = fechaInicio?.Date ?? DateTime.Now.Date;
+            var endDate = fechaFin?.Date.AddDays(1).AddTicks(-1) ?? DateTime.Now.Date.AddDays(1).AddTicks(-1);
 
             // Cargar lista de clientes para el filtro
             ViewBag.Clientes = await _context.Clientes.OrderBy(c => c.Nombre).ToListAsync();
@@ -36,7 +44,7 @@ namespace VentaPOS.Controllers
                 .Include(v => v.Cliente)
                 .Include(v => v.DetallesVentas)
                     .ThenInclude(d => d.Producto)
-                .Where(v => v.FechaVenta >= fechaInicio && v.FechaVenta <= fechaFin);
+                .Where(v => v.FechaVenta >= startDate && v.FechaVenta <= endDate);
 
             // Aplicar filtro por cliente si se especifica
             if (clienteID.HasValue)

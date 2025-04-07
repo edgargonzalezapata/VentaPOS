@@ -32,13 +32,13 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Fecha Inicio:</label>
-                            <input type="date" name="fechaInicio" value="@Context.Request.Query["fechaInicio"]" class="form-control" />
+                            <input type="date" name="fechaInicio" value="@ViewBag.FechaInicio" class="form-control" />
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Fecha Fin:</label>
-                            <input type="date" name="fechaFin" value="@Context.Request.Query["fechaFin"]" class="form-control" />
+                            <input type="date" name="fechaFin" value="@ViewBag.FechaFin" class="form-control" />
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -48,8 +48,8 @@
                                 <option value="">Todos los clientes</option>
                                 @foreach (var cliente in ViewBag.Clientes ?? new List<Cliente>())
                                 {
-                                    <option value="@cliente.ClienteID" 
-                                            selected="@(Context.Request.Query["clienteID"] == cliente.ClienteID.ToString())">
+                                    <option value="@cliente.ClienteId" 
+                                            selected="@(Context.Request.Query["clienteID"] == cliente.ClienteId.ToString())">
                                         @cliente.Nombre
                                     </option>
                                 }
@@ -57,15 +57,55 @@
                         </div>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary btn-lg w-50">
                             <i class="fas fa-filter"></i> Filtrar
                         </button>
-                        <a asp-action="Index" class="btn btn-secondary ml-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg w-50 ms-2">
                             <i class="fas fa-sync"></i> Limpiar
                         </a>
                     </div>
                 </div>
             </form>
+
+            <!-- Filtros Activos -->
+            @if (ViewBag.FechaInicio != null || ViewBag.FechaFin != null || ViewBag.ClienteID != null)
+            {
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading mb-2"><i class="fas fa-filter me-2"></i>Filtros Aplicados:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (ViewBag.FechaInicio != null)
+                        {
+                            <span class="badge bg-primary">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Desde: @DateTime.Parse(ViewBag.FechaInicio).ToString("dd/MM/yyyy")
+                            </span>
+                        }
+                        @if (ViewBag.FechaFin != null)
+                        {
+                            <span class="badge bg-primary">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Hasta: @DateTime.Parse(ViewBag.FechaFin).ToString("dd/MM/yyyy")
+                            </span>
+                        }
+                        @if (ViewBag.ClienteID != null)
+                        {
+                            var clienteSeleccionado = ((List<Cliente>)ViewBag.Clientes)
+                                .Where(c => c.ClienteId == (int)ViewBag.ClienteID)
+                                .FirstOrDefault();
+                            if (clienteSeleccionado != null)
+                            {
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-user me-1"></i>
+                                    Cliente: @clienteSeleccionado.Nombre
+                                </span>
+                            }
+                        }
+                        <a asp-action="Index" class="badge bg-danger text-decoration-none">
+                            <i class="fas fa-times me-1"></i>Limpiar Filtros
+                        </a>
+                    </div>
+                </div>
+            }
 
             <!-- Resumen de ventas -->
             <div class="row mb-4">

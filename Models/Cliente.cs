@@ -16,6 +16,7 @@ public partial class Cliente
     public string? Email { get; set; }
 
     public string? Telefono { get; set; }
+    public string? RutCliente { get; set; }
 
     public DateTime? UltimaCompra { get; set; }
 

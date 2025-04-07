@@ -1,0 +1,643 @@
+@model IEnumerable<VentaPOS.Models.Cliente>
+
+@{
+    ViewData["Title"] = "Gestión de Clientes";
+    Layout = "_PanelLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 3;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 3;
+            display: none;
+        }
+
+        .search-input {
+            padding-left: 2.5rem !important;
+            padding-right: 2.5rem !important;
+            border-radius: 0.5rem;
+        }
+        
+        /* Ocultar el campo de búsqueda de DataTables */
+        .dataTables_filter {
+            display: none !important;
+        }
+        
+        /* Ocultar la barra inferior de DataTables */
+        .dataTables_info, .dataTables_paginate {
+            display: none !important;
+        }
+    </style>
+}
+
+<div class="container p-4">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2">Gestión de Clientes</h1>
+                <p class="lead">Administra y visualiza toda la información de tus clientes</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" id="btnNuevoCliente" onclick="nuevoCliente()">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <!-- Barra de búsqueda estilo productos -->
+            <div class="search-wrapper">
+                <div class="search-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+                <input type="text" 
+                       id="buscarCliente" 
+                       class="form-control form-control-lg search-input" 
+                       placeholder="Buscar cliente por nombre, apellido, RUT o email...">
+                <div class="clear-search" id="searchClearButton">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Clientes -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="clientesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>RUT</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Última Compra</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cliente in Model)
+                        {
+                            <tr data-cliente-id="@cliente.ClienteId">
+                                <td>@cliente.RutCliente</td>
+                                <td>@cliente.Nombre</td>
+                                <td>@cliente.Apellidos</td>
+                                <td>@(string.IsNullOrEmpty(cliente.Email) ? "-" : cliente.Email)</td>
+                                <td>@(string.IsNullOrEmpty(cliente.Telefono) ? "-" : cliente.Telefono)</td>
+                                <td>@(cliente.UltimaCompra?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-editar" 
+                                            data-cliente-id="@cliente.ClienteId"
+                                            title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmarEliminar(@cliente.ClienteId, '@(cliente.Nombre) @(cliente.Apellidos)')" 
+                                            title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas de Edición -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editarClienteOffcanvas" aria-labelledby="editarClienteOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="editarClienteOffcanvasLabel">Editar Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="editarClienteForm" class="needs-validation" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editClienteId">
+            <div class="mb-3">
+                <label for="editRutCliente" class="form-label">RUT <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editRutCliente" required maxlength="10">
+                <div class="invalid-feedback">
+                    El RUT es requerido y debe tener un formato válido
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="editNombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editNombre" required maxlength="100">
+                <div class="invalid-feedback">
+                    El nombre es requerido
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="editApellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editApellidos" required maxlength="100">
+                <div class="invalid-feedback">
+                    Los apellidos son requeridos
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="editEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="editEmail" maxlength="100">
+                <div class="invalid-feedback">
+                    Ingrese un email válido o déjelo en blanco
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="editTelefono" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="editTelefono" maxlength="20">
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i>Guardar Cambios
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Offcanvas de Nuevo Cliente -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="nuevoClienteOffcanvas" aria-labelledby="nuevoClienteOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="nuevoClienteOffcanvasLabel">Nuevo Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="nuevoClienteForm" class="needs-validation" novalidate>
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label for="newRutCliente" class="form-label">RUT <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newRutCliente" required maxlength="10">
+                <div class="invalid-feedback">
+                    El RUT es requerido y debe tener un formato válido
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="newNombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newNombre" required maxlength="100">
+                <div class="invalid-feedback">
+                    El nombre es requerido
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="newApellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newApellidos" required maxlength="100">
+                <div class="invalid-feedback">
+                    Los apellidos son requeridos
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="newEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="newEmail" maxlength="100">
+                <div class="invalid-feedback">
+                    Ingrese un email válido o déjelo en blanco
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="newTelefono" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="newTelefono" maxlength="20">
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i>Guardar
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center">¿Está seguro que desea eliminar al cliente <strong><span id="nombreClienteEliminar"></span></strong>?</p>
+                <p class="text-danger text-center"><small>Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="eliminarCliente()">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- DataTables -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+        let clienteIdEliminar = null;
+        const editarClienteOffcanvas = new bootstrap.Offcanvas(document.getElementById('editarClienteOffcanvas'));
+        const nuevoClienteOffcanvas = new bootstrap.Offcanvas(document.getElementById('nuevoClienteOffcanvas'));
+        const confirmarEliminarModal = new bootstrap.Modal(document.getElementById('confirmarEliminarModal'));
+        let dataTable;
+
+        // Inicialización
+        $(document).ready(function() {
+            // Inicializar DataTable
+            dataTable = $('#clientesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                responsive: true,
+                paging: false,
+                info: false,
+                searching: true,
+                order: [[1, 'asc']], // Ordenar por nombre por defecto
+                columnDefs: [
+                    { targets: -1, orderable: false } // Última columna (acciones) no ordenable
+                ],
+                dom: 't' // Solo muestra la tabla (t)
+            });
+
+            // Configurar barra de búsqueda personalizada
+            const searchInput = document.getElementById('buscarCliente');
+            const searchClearButton = document.getElementById('searchClearButton');
+
+            searchInput.addEventListener('input', function(e) {
+                const hasValue = e.target.value.length > 0;
+                searchClearButton.style.display = hasValue ? 'block' : 'none';
+                
+                // Aplicar filtro a DataTable
+                dataTable.search(this.value).draw();
+            });
+
+            searchClearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClearButton.style.display = 'none';
+                searchInput.focus();
+                dataTable.search('').draw();
+            });
+
+            // Event listener para botones de editar
+            document.querySelectorAll('.btn-editar').forEach(button => {
+                button.addEventListener('click', function() {
+                    const clienteId = this.getAttribute('data-cliente-id');
+                    editarCliente(parseInt(clienteId));
+                });
+            });
+        });
+
+        // Función para mostrar notificaciones
+        function showNotification(title, message, icon) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: icon,
+                title: message
+            });
+        }
+
+        // Validación de RUT chileno
+        function validarRut(rut) {
+            if (!rut) return false;
+            
+            // Limpiar el RUT de puntos y guión
+            rut = rut.replace(/\./g, '').replace(/-/g, '');
+            
+            if (rut.length < 2) return false;
+            
+            // Obtener dígito verificador
+            const dv = rut.slice(-1).toUpperCase();
+            const rutNumero = parseInt(rut.slice(0, -1));
+            
+            if (isNaN(rutNumero)) return false;
+            
+            // Calcular dígito verificador esperado
+            let suma = 0;
+            let multiplicador = 2;
+            let rutReverso = rutNumero.toString().split('').reverse();
+            
+            for(let i = 0; i < rutReverso.length; i++) {
+                suma += parseInt(rutReverso[i]) * multiplicador;
+                multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+            }
+            
+            const dvEsperado = 11 - (suma % 11);
+            const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+            
+            return dvCalculado === dv;
+        }
+
+        // Función para editar cliente
+        async function editarCliente(id) {
+            try {
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Cargando cliente...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                if (!id || isNaN(id) || id <= 0) {
+                    throw new Error('ID de cliente inválido');
+                }
+
+                const response = await fetch(`/Clientes/Edit/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error al cargar el cliente: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Cerrar indicador de carga
+                Swal.close();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Error al cargar los datos del cliente');
+                }
+                
+                document.getElementById('editClienteId').value = data.clienteId;
+                document.getElementById('editRutCliente').value = data.rutCliente || '';
+                document.getElementById('editNombre').value = data.nombre || '';
+                document.getElementById('editApellidos').value = data.apellidos || '';
+                document.getElementById('editEmail').value = data.email || '';
+                document.getElementById('editTelefono').value = data.telefono || '';
+                
+                editarClienteOffcanvas.show();
+            } catch (error) {
+                console.error('Error al cargar cliente:', error);
+                showNotification('Error', error.message || 'Error al cargar los datos del cliente', 'error');
+            }
+        }
+
+        // Manejar el envío del formulario de edición
+        document.getElementById('editarClienteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            form.classList.add('was-validated');
+            
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            const rut = document.getElementById('editRutCliente').value;
+            if (!validarRut(rut)) {
+                document.getElementById('editRutCliente').setCustomValidity('RUT inválido');
+                return;
+            }
+
+            const clienteId = document.getElementById('editClienteId').value;
+            const clienteData = {
+                clienteId: parseInt(clienteId),
+                rutCliente: rut,
+                nombre: document.getElementById('editNombre').value.trim(),
+                apellidos: document.getElementById('editApellidos').value.trim(),
+                email: document.getElementById('editEmail').value.trim() || null,
+                telefono: document.getElementById('editTelefono').value.trim() || null
+            };
+
+            try {
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Guardando cambios...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`/Clientes/Edit/${clienteId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(clienteData)
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+
+                showNotification('Éxito', 'Cliente actualizado correctamente', 'success');
+                editarClienteOffcanvas.hide();
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                console.error('Error al guardar cliente:', error);
+                showNotification('Error', error.message || 'Error al guardar los cambios', 'error');
+            } finally {
+                Swal.close();
+            }
+        });
+
+        // Función para confirmar eliminación
+        function confirmarEliminar(id, nombre) {
+            clienteIdEliminar = id;
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                html: `¿Deseas eliminar al cliente <strong>${nombre}</strong>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    eliminarCliente();
+                }
+            });
+        }
+
+        // Función para eliminar cliente
+        async function eliminarCliente() {
+            try {
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Eliminando cliente...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`/Clientes/Delete/${clienteIdEliminar}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Éxito', 'Cliente eliminado correctamente', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                showNotification('Error', error.message || 'Error al eliminar el cliente', 'error');
+            } finally {
+                Swal.close();
+            }
+        }
+
+        // Limpiar validación al cerrar el offcanvas
+        document.getElementById('editarClienteOffcanvas').addEventListener('hidden.bs.offcanvas', function () {
+            const form = document.getElementById('editarClienteForm');
+            form.classList.remove('was-validated');
+            form.reset();
+        });
+
+        // Limpiar validación al escribir en el campo RUT
+        document.getElementById('editRutCliente').addEventListener('input', function() {
+            this.setCustomValidity('');
+        });
+
+        // Función para mostrar el formulario de nuevo cliente
+        function nuevoCliente() {
+            document.getElementById('nuevoClienteForm').reset();
+            nuevoClienteOffcanvas.show();
+        }
+
+        // Event listener para el formulario de nuevo cliente
+        document.getElementById('nuevoClienteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
+
+            const rutCliente = document.getElementById('newRutCliente').value;
+            if (!validarRut(rutCliente)) {
+                document.getElementById('newRutCliente').setCustomValidity('RUT inválido');
+                this.classList.add('was-validated');
+                return;
+            }
+
+            try {
+                // Mostrar indicador de carga
+                Swal.fire({
+                    title: 'Guardando cliente...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const formData = {
+                    rutCliente: rutCliente,
+                    nombre: document.getElementById('newNombre').value,
+                    apellidos: document.getElementById('newApellidos').value,
+                    email: document.getElementById('newEmail').value,
+                    telefono: document.getElementById('newTelefono').value
+                };
+
+                const response = await fetch('/Clientes/Create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Éxito', 'Cliente creado correctamente', 'success');
+                    nuevoClienteOffcanvas.hide();
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || 'Error al crear el cliente');
+                }
+            } catch (error) {
+                console.error('Error al crear cliente:', error);
+                showNotification('Error', error.message || 'Error al crear el cliente', 'error');
+            } finally {
+                Swal.close();
+            }
+        });
+    </script>
+} 

@@ -23,206 +23,393 @@
     .toast-notification {
         animation: slideInUp 0.3s ease forwards;
     }
+
+    .producto-card {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .producto-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .cantidad-control {
+        transition: all 0.2s ease;
+    }
+
+    .cantidad-control:hover {
+        background-color: #E5E7EB;
+    }
+
+    .cantidad-input::-webkit-inner-spin-button,
+    .cantidad-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .cantidad-input {
+        -moz-appearance: textfield;
+    }
+
+    .search-container {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .search-container:focus-within {
+        transform: translateY(-1px);
+    }
+
+    .search-input {
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+    }
+
+    .categoria-badge {
+        transition: all 0.2s ease;
+    }
+
+    .categoria-badge:hover {
+        transform: translateY(-1px);
+    }
+
+    .categoria-badge.active {
+        background-color: #2563eb;
+        color: white;
+        border-color: #2563eb;
+    }
+
+    .search-wrapper {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 3;
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+        z-index: 3;
+        display: none;
+    }
+
+    .search-input {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+
+    .filters-container {
+        background-color: #fff;
+        border-bottom: 1px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        padding: 1rem;
+    }
+
+    .header-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .datetime-badge {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 </style>
 
-<div class="tw-flex tw-h-screen tw-overflow-hidden tw-flex-col md:tw-flex-row">
-    <!-- Contenido Principal (productos) -->
-    <div class="tw-flex-1 tw-overflow-y-auto tw-bg-gray-50 tw-min-w-0">
-        <!-- Barra superior -->
-        <div class="tw-bg-white tw-border-b tw-border-gray-200">
-            <div class="tw-px-6 tw-py-4 tw-flex tw-justify-between tw-items-center">
+<div class="d-flex h-100 overflow-hidden flex-column flex-md-row">
+    <!-- Panel principal -->
+    <div class="flex-grow-1 overflow-auto bg-light">
+        <!-- Barra superior con filtros -->
+        <div class="filters-container shadow-sm">
+            <div class="header-section d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="tw-text-2xl tw-font-bold tw-text-gray-900">Nuevo Pedido</h1>
-                    <p class="tw-text-sm tw-text-gray-500">Crea un nuevo pedido seleccionando los productos</p>
+                    <h1 class="h3 mb-1">Nuevo Pedido</h1>
+                    <p class="text-muted mb-0">Crea un nuevo pedido seleccionando los productos</p>
                 </div>
-                <div class="tw-bg-blue-50 tw-rounded-lg tw-px-4 tw-py-2 tw-flex tw-items-center">
-                    <svg class="tw-w-5 tw-h-5 tw-text-blue-600 tw-mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="tw-text-blue-700 tw-font-medium">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                <div class="datetime-badge">
+                    <i class="bi bi-clock"></i>
+                    <span>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </div>
+
+            <!-- Contenedor de búsqueda y filtros -->
+            <div class="row g-3">
+                <!-- Barra de búsqueda -->
+                <div class="col-12">
+                    <div class="search-wrapper">
+                        <div class="search-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <input type="text" 
+                               id="buscarProducto" 
+                               class="form-control form-control-lg search-input" 
+                               placeholder="Buscar productos por nombre, código o categoría...">
+                        <div class="clear-search" id="searchClearButton">
+                            <i class="bi bi-x-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros de categoría -->
+                <div class="col-12">
+                    <div class="btn-group flex-wrap" role="group" aria-label="Filtros de categoría">
+                        <button type="button" 
+                                class="btn btn-outline-primary categoria-badge active"
+                                data-categoria="todos">
+                            <i class="bi bi-grid me-2"></i>
+                            Todos
+                        </button>
+                        @foreach (var categoria in Model.Productos.Select(p => p.Categoria?.Nombre).Distinct().Where(c => c != null))
+                        {
+                            <button type="button" 
+                                    class="btn btn-outline-primary categoria-badge"
+                                    data-categoria="@categoria">
+                                <i class="bi bi-tag me-2"></i>
+                                @categoria
+                            </button>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Contenedor principal con más espacio -->
-        <div class="tw-p-8">
-            <!-- Barra de búsqueda con diseño moderno y más espaciado -->
-            <div class="tw-bg-white tw-rounded-xl tw-shadow-md tw-border tw-border-gray-200 tw-overflow-hidden tw-mb-6">
-                <div class="tw-flex tw-items-center tw-px-5 tw-py-4">
-                    <!-- Icono de búsqueda -->
-                    <div class="tw-text-gray-500 tw-mr-3">
-                        <svg class="tw-w-5 tw-h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
-                        </svg>
-                    </div>
-                    
-                    <!-- Campo de entrada -->
-                    <input type="text" 
-                           id="buscarProducto" 
-                           placeholder="Buscar productos por nombre, código o categoría..." 
-                           class="tw-block tw-w-full tw-bg-transparent tw-border-0 tw-text-gray-900 tw-placeholder-gray-500 focus:tw-outline-none focus:tw-ring-0 tw-text-base">
-                </div>
-            </div>
-
-            <!-- Contador de productos con mayor margen -->
-            <div class="tw-flex tw-justify-between tw-items-center tw-mb-6">
+        <!-- Grid de productos -->
+        <div class="tw-p-6">
+            <div class="tw-mb-4 tw-flex tw-justify-between tw-items-center">
                 <p class="tw-text-sm tw-font-medium tw-text-gray-500">
                     <span id="contadorProductos">@Model.Productos.Count()</span> productos encontrados
                 </p>
             </div>
 
-            <!-- Tabla de Productos con borde sombreado (sin columna Estado) -->
-            <div class="tw-bg-white tw-rounded-xl tw-shadow-md tw-border tw-border-gray-200 tw-overflow-hidden">
-                <div class="tw-overflow-x-auto">
-                    <table class="tw-w-full tw-table-auto">
-                        <thead class="tw-bg-gray-50 tw-text-gray-700">
-                            <tr>
-                                <th class="tw-px-6 tw-py-4 tw-text-left tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Producto</th>
-                                <th class="tw-px-6 tw-py-4 tw-text-left tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Categoría</th>
-                                <th class="tw-px-6 tw-py-4 tw-text-right tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Precio</th>
-                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Stock</th>
-                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Cantidad</th>
-                                <th class="tw-px-6 tw-py-4 tw-text-center tw-text-xs tw-font-medium tw-uppercase tw-tracking-wider">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="tw-divide-y tw-divide-gray-200">
-                            @foreach (var producto in Model.Productos)
+            <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-4">
+                @foreach (var producto in Model.Productos)
+                {
+                    <div class="producto-card tw-bg-white tw-rounded-xl tw-shadow-sm tw-border tw-border-gray-200 tw-overflow-hidden"
+                         data-categoria="@(producto.Categoria?.Nombre ?? "")"
+                         data-nombre="@producto.Nombre"
+                         data-precio="@producto.Precio"
+                         data-id="@producto.ProductoID">
+                        <div class="tw-p-4">
+                            <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                <div class="tw-h-12 tw-w-12 tw-bg-blue-100 tw-rounded-lg tw-flex tw-items-center tw-justify-center">
+                                    <svg class="tw-w-6 tw-h-6 tw-text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <span class="tw-text-xs tw-font-medium tw-bg-blue-50 tw-text-blue-600 tw-px-2 tw-py-1 tw-rounded-full">
+                                    @(producto.Categoria?.Nombre ?? "Sin categoría")
+                                </span>
+                            </div>
+                            
+                            <h3 class="tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-2">@producto.Nombre</h3>
+                            @if (!string.IsNullOrEmpty(producto.Descripcion))
                             {
-                                <tr class="hover:tw-bg-gray-50 tw-transition-colors producto-card"
-                                    data-categoria="@(producto.Categoria?.Nombre ?? "")"
-                                    data-nombre="@producto.Nombre"
-                                    data-precio="@producto.Precio"
-                                    data-id="@producto.ProductoID">
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap">
-                                        <div class="tw-flex tw-items-center">
-                                            <div class="tw-flex-shrink-0 tw-h-10 tw-w-10 tw-bg-blue-100 tw-rounded-full tw-flex tw-items-center tw-justify-center">
-                                                <svg class="tw-w-5 tw-h-5 tw-text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                            </div>
-                                            <div class="tw-ml-4">
-                                                <div class="tw-text-sm tw-font-medium tw-text-gray-900">@producto.Nombre</div>
-                                                @if (!string.IsNullOrEmpty(producto.Descripcion))
-                                                {
-                                                    <div class="tw-text-xs tw-text-gray-500">@producto.Descripcion</div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap">
-                                        <span class="tw-text-xs tw-font-medium tw-bg-blue-50 tw-text-blue-600 tw-px-2 tw-py-0.5 tw-rounded-full">
-                                            @(producto.Categoria?.Nombre ?? "Sin categoría")
-                                        </span>
-                                    </td>
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-right tw-text-sm tw-font-medium tw-text-blue-600">
-                                        $@producto.Precio.ToString("N0")
-                                    </td>
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
-                                        <span class="tw-text-xs tw-font-medium tw-px-2 tw-py-0.5 tw-rounded-full @(producto.Stock > 0 ? "tw-bg-green-100 tw-text-green-800" : "tw-bg-red-100 tw-text-red-800")">
-                                            @producto.Stock
-                                        </span>
-                                    </td>
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
-                                        <div class="producto-cantidad tw-flex tw-items-center tw-justify-center tw-border tw-border-gray-300 tw-rounded-lg tw-overflow-hidden tw-w-28 tw-mx-auto">
-                                            <button type="button" class="decrementar-cantidad tw-px-2 tw-py-1 tw-bg-gray-100 hover:tw-bg-gray-200">
-                                                <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                                                </svg>
-                                            </button>
-                                            <input type="number" class="tw-w-12 tw-text-center tw-border-0 tw-focus:ring-0" value="1" min="1" max="99">
-                                            <button type="button" class="incrementar-cantidad tw-px-2 tw-py-1 tw-bg-gray-100 hover:tw-bg-gray-200">
-                                                <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12M6 12h12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td class="tw-px-6 tw-py-5 tw-whitespace-nowrap tw-text-center">
-                                        <button type="button"
-                                                class="agregar-producto tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-bg-blue-600 tw-text-white tw-rounded-lg hover:tw-bg-blue-700 tw-transition-colors tw-font-medium"
-                                                data-producto-id="@producto.ProductoID"
-                                                data-producto-nombre="@producto.Nombre"
-                                                data-producto-precio="@producto.Precio">
-                                            Agregar
-                                        </button>
-                                    </td>
-                                </tr>
+                                <p class="tw-text-sm tw-text-gray-500 tw-mb-4">@producto.Descripcion</p>
                             }
-                        </tbody>
-                    </table>
-                </div>
+                            
+                            <div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                                <span class="tw-text-xl tw-font-bold tw-text-blue-600">$@producto.Precio.ToString("N0")</span>
+                                <span class="tw-text-sm tw-font-medium tw-px-2 tw-py-1 tw-rounded-full @(producto.Stock > 0 ? "tw-bg-green-100 tw-text-green-800" : "tw-bg-red-100 tw-text-red-800")">
+                                    Stock: @producto.Stock
+                                </span>
+                            </div>
+
+                            <div class="tw-flex tw-items-center tw-space-x-2">
+                                <div class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-border tw-border-gray-300 tw-rounded-lg tw-overflow-hidden">
+                                    <button type="button" class="decrementar-cantidad tw-px-3 tw-py-2 cantidad-control">
+                                        <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                        </svg>
+                                    </button>
+                                    <input type="number" class="tw-w-16 tw-text-center tw-border-0 focus:tw-ring-0 cantidad-input" value="1" min="1" max="99">
+                                    <button type="button" class="incrementar-cantidad tw-px-3 tw-py-2 cantidad-control">
+                                        <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12M6 12h12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button type="button"
+                                        class="agregar-producto tw-flex-1 tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-bg-blue-600 tw-text-white tw-rounded-lg hover:tw-bg-blue-700 tw-transition-colors tw-font-medium"
+                                        data-producto-id="@producto.ProductoID"
+                                        data-producto-nombre="@producto.Nombre"
+                                        data-producto-precio="@producto.Precio">
+                                    <svg class="tw-w-5 tw-h-5 tw-mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-
     </div>
 
-    <!-- Panel lateral para el carrito con borde sombreado -->
-    <div id="carrito" class="tw-w-96 tw-min-w-96 tw-max-w-96 tw-bg-white tw-shadow-lg tw-border tw-border-gray-200 tw-rounded-lg tw-flex tw-flex-col tw-h-full">
+    <!-- Panel lateral del carrito -->
+    <div id="carrito" class="bg-white border-start shadow-lg d-flex flex-column" style="width: 400px; min-width: 400px;">
         <!-- Encabezado del carrito -->
-        <div class="tw-p-4 tw-border-b tw-border-gray-200 tw-bg-gray-50 tw-rounded-t-lg">
-            <h2 class="tw-text-lg tw-font-semibold tw-text-gray-800">Carrito de Compra</h2>
+        <div class="p-3 border-bottom bg-light">
+            <div class="d-flex align-items-center justify-content-between">
+                <h2 class="h5 mb-0">Carrito de Compra</h2>
+                <span id="carritoCount" class="badge bg-primary rounded-pill">0</span>
+            </div>
         </div>
 
         <!-- Contenido del carrito -->
-        <div class="tw-flex-1 tw-overflow-y-auto">
+        <div class="flex-grow-1 overflow-auto" style="max-height: calc(100vh - 500px);">
             <!-- Mensaje de carrito vacío -->
-            <div id="carritoVacio" class="tw-hidden tw-flex tw-items-center tw-justify-center tw-h-32">
-                <p class="tw-text-gray-500 tw-text-lg">Tu carrito está vacío</p>
+            <div id="carritoVacio" class="text-center p-4 d-flex flex-column align-items-center justify-content-center" style="height: 200px;">
+                <i class="bi bi-cart text-muted mb-3" style="font-size: 2.5rem;"></i>
+                <p class="h5 text-muted mb-2">Tu carrito está vacío</p>
+                <p class="text-muted small">Agrega productos para comenzar</p>
             </div>
 
             <!-- Items del carrito -->
-            <div id="carritoItems" class="tw-w-full">
-                <!-- Los items se agregarán dinámicamente aquí -->
-            </div>
+            <div id="carritoItems"></div>
         </div>
 
-        <!-- Formulario del pedido -->
-        <div class="tw-border-t tw-border-gray-200 tw-p-4">
-            <div class="tw-space-y-4">
-                <!-- Cliente y tipo de pedido -->
-                <div class="tw-space-y-2">
-                    <select id="clienteSelect" class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm">
-                        <option value="">Seleccionar Cliente</option>
-                    </select>
-                    <select id="tipoPedido" class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm">
-                        <option value="Local">Local</option>
-                        <option value="Delivery">Delivery</option>
-                        <option value="Para Llevar">Para Llevar</option>
-                    </select>
+        <!-- Formulario y botones -->
+        <div class="border-top bg-white">
+            <!-- Formulario -->
+            <div class="p-3">
+                <div class="d-flex flex-column gap-3">
+                    <!-- Cliente y tipo de pedido -->
+                    <div class="d-flex flex-column gap-2">
+                        <div class="form-group">
+                            <label for="clienteSelect" class="form-label">Cliente</label>
+                            <div class="input-group">
+                                <select id="clienteSelect" class="form-select">
+                                    <option value="0">Venta al Contado</option>
+                                    @foreach (var cliente in Model.Clientes)
+                                    {
+                                        <option value="@cliente.ClienteId">@cliente.Nombre @cliente.Apellidos</option>
+                                    }
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#agregarClienteModal">
+                                    <i class="bi bi-person-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoPedido" class="form-label">Tipo de Pedido</label>
+                            <select id="tipoPedido" class="form-select">
+                                <option value="Local">Local</option>
+                                <option value="Delivery">Delivery</option>
+                                <option value="Para Llevar">Para Llevar</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="form-group">
+                        <label for="notas" class="form-label">Notas Especiales</label>
+                        <textarea id="notas" 
+                                  class="form-control"
+                                  placeholder="Agregar notas especiales al pedido..."
+                                  style="height: 80px; resize: none;"></textarea>
+                    </div>
+
+                    <!-- Resumen -->
+                    <div class="bg-light rounded p-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal:</span>
+                            <span id="subtotal" class="fw-medium">$0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Descuento:</span>
+                            <span id="descuento" class="fw-medium">$0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">IVA (19%):</span>
+                            <span id="impuestos" class="fw-medium">$0</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-2 border-top">
+                            <span class="h6 mb-0">Total:</span>
+                            <span id="total" class="h6 mb-0 text-primary">$0</span>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Notas -->
-                <textarea id="notas" placeholder="Notas especiales..." class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-py-2 tw-px-3 tw-text-sm tw-h-20 tw-resize-none"></textarea>
-
-                <!-- Resumen -->
-                <div class="tw-space-y-2">
-                    <div class="tw-flex tw-justify-between tw-text-sm">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">$0</span>
-                    </div>
-                    <div class="tw-flex tw-justify-between tw-text-sm">
-                        <span>Descuento:</span>
-                        <span id="descuento">$0</span>
-                    </div>
-                    <div class="tw-flex tw-justify-between tw-text-sm">
-                        <span>IVA (19%):</span>
-                        <span id="impuestos">$0</span>
-                    </div>
-                    <div class="tw-flex tw-justify-between tw-font-semibold tw-text-lg">
-                        <span>Total:</span>
-                        <span id="total">$0</span>
-                    </div>
-                </div>
-
-                <!-- Botones -->
-                <div class="tw-flex tw-space-x-2">
-                    <button id="crearPedido" class="tw-flex-1 tw-bg-blue-600 tw-text-white tw-rounded-md tw-py-2 tw-text-sm tw-font-medium hover:tw-bg-blue-700">
+            <!-- Botones de acción -->
+            <div class="p-3 bg-light border-top">
+                <div class="d-grid gap-2">
+                    <button id="crearPedido" class="btn btn-primary btn-lg">
+                        <i class="bi bi-cart-check me-2"></i>
                         Crear Pedido
                     </button>
-                    <button id="cancelarPedido" class="tw-flex-1 tw-bg-gray-200 tw-text-gray-800 tw-rounded-md tw-py-2 tw-text-sm tw-font-medium hover:tw-bg-gray-300">
-                        Cancelar
+                    <button id="cancelarPedido" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Cancelar Pedido
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Agregar Cliente -->
+<div class="modal fade" id="agregarClienteModal" tabindex="-1" aria-labelledby="agregarClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarClienteModalLabel">Agregar Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoCliente">
+                    <div class="mb-3">
+                        <label for="rutCliente" class="form-label">RUT <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="rutCliente" required maxlength="10">
+                        <div class="form-text">Formato: 12345678-9</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombreCliente" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombreCliente" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="apellidosCliente" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="apellidosCliente" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="emailCliente" class="form-label">Email <span class="text-muted">(opcional)</span></label>
+                        <input type="email" class="form-control" id="emailCliente" maxlength="100">
+                        <div class="form-text">Ingrese un email válido o deje en blanco</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefonoCliente" class="form-label">Teléfono <span class="text-muted">(opcional)</span></label>
+                        <input type="tel" class="form-control" id="telefonoCliente" maxlength="20">
+                        <div class="form-text">Ingrese un número de teléfono o deje en blanco</div>
+                    </div>
+                    <div class="text-muted small">
+                        <span class="text-danger">*</span> Campos obligatorios
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar Cliente</button>
             </div>
         </div>
     </div>
@@ -234,6 +421,22 @@
             console.log('DOM Cargado');
             window.carrito = new Map();
             
+            // Event listeners para botones de filtro de categoría
+            document.querySelectorAll('.categoria-badge').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remover clase activa de todos los botones
+                    document.querySelectorAll('.categoria-badge').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Agregar clase activa al botón clickeado
+                    this.classList.add('active');
+                    
+                    // Filtrar productos
+                    filtrarProductos();
+                });
+            });
+            
             // Event listeners para botones de agregar productos
             document.querySelectorAll('.agregar-producto').forEach(button => {
                 button.addEventListener('click', function() {
@@ -242,8 +445,8 @@
                     const precio = parseFloat(this.dataset.productoPrecio);
                     
                     // Obtener la cantidad correctamente
-                    const row = this.closest('tr');
-                    const cantidadInput = row ? row.querySelector('input[type="number"]') : null;
+                    const card = this.closest('.producto-card');
+                    const cantidadInput = card ? card.querySelector('input[type="number"]') : null;
                     const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
                     
                     // Agregar al carrito y mostrar notificación
@@ -301,7 +504,7 @@
                 
                 // Crear elemento de notificación
                 const notificacion = document.createElement('div');
-                notificacion.className = `toast-${tipo}`;
+                notificacion.className = `toast-${tipo} toast-notification`;
                 notificacion.style.position = 'fixed';
                 notificacion.style.top = '20px';
                 notificacion.style.left = '50%';
@@ -418,243 +621,399 @@
                 });
             });
 
-            // Filtro por categoría
-            if (document.getElementById('filtroCategoria')) {
-                document.getElementById('filtroCategoria').addEventListener('change', function() {
-                    filtrarProductos();
-                });
-            }
+            // Mejorar la funcionalidad del campo de búsqueda
+            const searchInput = document.getElementById('buscarProducto');
+            const searchClearButton = document.getElementById('searchClearButton');
 
-            // Función para filtrar productos
+            searchInput.addEventListener('input', function(e) {
+                const hasValue = e.target.value.length > 0;
+                searchClearButton.style.display = hasValue ? 'block' : 'none';
+                filtrarProductos();
+            });
+
+            searchClearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClearButton.style.display = 'none';
+                searchInput.focus();
+                filtrarProductos();
+            });
+
+            // Función mejorada para filtrar productos
             function filtrarProductos() {
-                const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
+                const busqueda = searchInput.value.toLowerCase();
+                const categoriaSeleccionada = document.querySelector('.categoria-badge.active')?.dataset.categoria;
                 
                 let productosVisibles = 0;
+                const duracionAnimacion = 200;
                 
                 document.querySelectorAll('.producto-card').forEach(card => {
                     const nombre = card.dataset.nombre.toLowerCase();
                     const categoria = card.dataset.categoria.toLowerCase();
                     
-                    // Filtrar por texto de búsqueda
                     const coincideTexto = nombre.includes(busqueda) || categoria.includes(busqueda);
+                    const coincideCategoria = categoriaSeleccionada === 'todos' || !categoriaSeleccionada || categoria === categoriaSeleccionada.toLowerCase();
                     
-                    const mostrar = coincideTexto;
-                    card.style.display = mostrar ? '' : 'none';
+                    const mostrar = coincideTexto && coincideCategoria;
                     
-                    if (mostrar) productosVisibles++;
+                    if (mostrar) {
+                        card.style.display = '';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 50);
+                        productosVisibles++;
+                    } else {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(10px)';
+                        setTimeout(() => {
+                            if (card.style.opacity === '0') {
+                                card.style.display = 'none';
+                            }
+                        }, duracionAnimacion);
+                    }
                 });
                 
-                // Actualizar contador de productos
-                document.getElementById('contadorProductos').textContent = productosVisibles;
+                // Actualizar contador con animación
+                const contador = document.getElementById('contadorProductos');
+                contador.style.transform = 'scale(1.1)';
+                contador.textContent = productosVisibles;
+                setTimeout(() => {
+                    contador.style.transform = 'scale(1)';
+                }, 150);
             }
 
-            // Búsqueda de productos
-            document.getElementById('buscarProducto').addEventListener('input', function(e) {
-                filtrarProductos();
-            });
+            // Procesar Pedido
+            document.getElementById('crearPedido').addEventListener('click', async function() {
+                console.log('Click en crear pedido');
+                
+                if (window.carrito.size === 0) {
+                    mostrarNotificacionError('El carrito está vacío');
+                    return;
+                }
 
-            // Verificar que el botón existe
-            const btnCrearPedido = document.getElementById('crearPedido');
-            console.log('Botón crear pedido:', btnCrearPedido);
+                const clienteID = document.getElementById('clienteSelect').value;
+                const tipoPedido = document.getElementById('tipoPedido').value;
+                const notas = document.getElementById('notas').value;
 
-            if (btnCrearPedido) {
-                // Procesar Pedido
-                btnCrearPedido.addEventListener('click', async function() {
-                    console.log('Click en crear pedido');
-                    console.log('Estado actual del carrito:', Array.from(window.carrito.entries())); // Debug del carrito
+                // Preparar los datos del pedido
+                const productos = [];
+                let subtotalCalculado = 0;
+
+                window.carrito.forEach((item, id) => {
+                    const totalProducto = item.precio * item.cantidad;
+                    subtotalCalculado += totalProducto;
                     
-                    if (window.carrito.size === 0) {
-                        mostrarNotificacionError('El carrito está vacío');
-                        return;
-                    }
+                    productos.push({
+                        ProductoId: id.toString(),
+                        Cantidad: item.cantidad,
+                        Precio: item.precio
+                    });
+                });
 
-                    const clienteID = document.getElementById('clienteSelect').value;
-                    const tipoPedido = document.getElementById('tipoPedido').value;
-                    const notas = document.getElementById('notas').value;
+                const impuestosCalculados = subtotalCalculado * 0.19;
+                const totalCalculado = subtotalCalculado + impuestosCalculados;
 
-                    // Preparar los datos del pedido
-                    const productos = [];
-                    let subtotalCalculado = 0;
+                const requestData = {
+                    ClienteId: clienteID || "0", // Si no hay cliente seleccionado, se usa 0 para venta al contado
+                    TipoPedido: tipoPedido,
+                    Notas: notas || "",
+                    Productos: productos,
+                    Subtotal: subtotalCalculado,
+                    Impuestos: impuestosCalculados,
+                    Descuento: 0,
+                    Total: totalCalculado
+                };
 
-                    window.carrito.forEach((item, id) => {
-                        const totalProducto = item.precio * item.cantidad;
-                        subtotalCalculado += totalProducto;
-                        
-                        productos.push({
-                            ProductoId: id.toString(),
-                            Cantidad: item.cantidad,
-                            Precio: item.precio
-                        });
+                try {
+                    // Mostrar notificación de procesamiento
+                    const notificacionProcesando = mostrarNotificacionProcesando('Procesando pedido...');
+                    
+                    // Deshabilitar botones y mostrar estado de carga
+                    const btnCrearPedido = document.getElementById('crearPedido');
+                    const btnCancelarPedido = document.getElementById('cancelarPedido');
+                    
+                    btnCrearPedido.disabled = true;
+                    btnCrearPedido.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...';
+                    btnCancelarPedido.disabled = true;
+
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    
+                    const response = await fetch('/Ventas/CrearPedido', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify(requestData)
                     });
 
-                    const impuestosCalculados = subtotalCalculado * 0.19;
-                    const totalCalculado = subtotalCalculado + impuestosCalculados;
+                    // Eliminar notificación de procesamiento
+                    cerrarNotificacion(notificacionProcesando);
 
-                    const requestData = {
-                        ClienteId: clienteID || "0",
-                        TipoPedido: tipoPedido,
-                        Notas: notas || "",
-                        Productos: productos,
-                        Subtotal: subtotalCalculado,
-                        Impuestos: impuestosCalculados,
-                        Descuento: 0,
-                        Total: totalCalculado
-                    };
-
-                    console.log('Datos de la venta a enviar:', JSON.stringify(requestData, null, 2));
-
-                    try {
-                        // Mostrar notificación de procesamiento
-                        const notificacionProcesando = mostrarNotificacionProcesando('Generando pedido...');
-                        
-                        // Deshabilitar botones mientras se procesa
-                        const btnCancelarPedido = document.getElementById('cancelarPedido');
-                        btnCrearPedido.disabled = true;
-                        btnCancelarPedido.disabled = true;
-
-                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                        console.log('Token CSRF:', token);
-
-                        const response = await fetch('/Ventas/CrearPedido', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': token
-                            },
-                            body: JSON.stringify(requestData)
-                        });
-
-                        console.log('Respuesta HTTP:', response.status);
-
-                        // Eliminar notificación de procesamiento
-                        if (document.body.contains(notificacionProcesando)) {
-                            document.body.removeChild(notificacionProcesando);
-                        }
-
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('Error response:', errorText);
-                            throw new Error(`Error al procesar el pedido: ${errorText || response.statusText}`);
-                        }
-
-                        const result = await response.json();
-                        console.log('Respuesta del servidor:', result);
-
-                        if (result.success) {
-                            mostrarNotificacion('¡Pedido creado exitosamente!');
-                            window.limpiarFormulario();
-                            // Redirigir a la página de ListaVentas
-                            window.location.href = '/Ventas/ListaVentas';
-                        } else {
-                            throw new Error(result.message || 'Error al procesar el pedido');
-                        }
-                    } catch (error) {
-                        console.error('Error completo:', error);
-                        mostrarNotificacionError(error.message);
-                    } finally {
-                        // Restaurar los botones
-                        const btnCancelarPedido = document.getElementById('cancelarPedido');
-                        btnCrearPedido.disabled = false;
-                        btnCancelarPedido.disabled = false;
+                    if (!response.ok) {
+                        throw new Error(`Error al procesar el pedido: ${response.statusText}`);
                     }
-                });
-            }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        mostrarNotificacion('¡Pedido creado exitosamente!');
+                        window.limpiarFormulario();
+                        setTimeout(() => {
+                            window.location.href = '/Ventas/ListaVentas';
+                        }, 1000);
+                    } else {
+                        throw new Error(result.message || 'Error al procesar el pedido');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarNotificacionError(error.message);
+                } finally {
+                    // Restaurar botones
+                    const btnCrearPedido = document.getElementById('crearPedido');
+                    const btnCancelarPedido = document.getElementById('cancelarPedido');
+                    
+                    btnCrearPedido.disabled = false;
+                    btnCrearPedido.innerHTML = '<i class="bi bi-cart-check"></i> Crear Pedido';
+                    btnCancelarPedido.disabled = false;
+                }
+            });
 
             // Botón Cancelar
-            const btnCancelarPedido = document.getElementById('cancelarPedido');
-            if (btnCancelarPedido) {
-                btnCancelarPedido.addEventListener('click', function() {
-                    if (window.carrito.size > 0) {
-                        if (confirm('¿Está seguro que desea cancelar el pedido? Se perderán todos los productos agregados.')) {
-                            window.limpiarFormulario();
-                        }
-                    } else {
+            document.getElementById('cancelarPedido').addEventListener('click', function() {
+                if (window.carrito.size > 0) {
+                    if (confirm('¿Está seguro que desea cancelar el pedido? Se perderán todos los productos agregados.')) {
                         window.limpiarFormulario();
                     }
-                });
-            }
+                } else {
+                    window.limpiarFormulario();
+                }
+            });
 
             // Definir funciones globales
             window.actualizarCarrito = function() {
                 const carritoVacio = document.getElementById('carritoVacio');
                 const carritoItems = document.getElementById('carritoItems');
                 const items = Array.from(window.carrito.values());
+                
+                // Actualizar contador de items
+                document.getElementById('carritoCount').textContent = items.length;
 
                 if (items.length === 0) {
-                    carritoVacio.classList.remove('tw-hidden');
+                    carritoVacio.style.display = 'flex';
                     carritoItems.innerHTML = '';
                     return;
                 }
 
-                carritoVacio.classList.add('tw-hidden');
+                carritoVacio.style.display = 'none';
                 carritoItems.innerHTML = items.map(item => `
-                    <div class="tw-flex tw-items-center tw-justify-between tw-p-4 tw-border-b tw-border-gray-100">
-                        <div class="tw-flex-1 tw-min-w-0">
-                            <p class="tw-text-sm tw-font-medium tw-text-gray-900">${item.nombre}</p>
-                            <p class="tw-text-sm tw-text-blue-600">$${item.precio.toLocaleString()}</p>
-                        </div>
-                        <div class="tw-flex tw-items-center tw-space-x-4 tw-ml-4">
-                            <div class="tw-flex tw-items-center tw-border tw-border-gray-300 tw-rounded-md tw-overflow-hidden">
-                                <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad - 1})" class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 hover:tw-bg-gray-200">
-                                    −
-                                </button>
-                                <span class="tw-w-8 tw-text-center">${item.cantidad}</span>
-                                <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad + 1})" class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 hover:tw-bg-gray-200">
-                                    +
+                    <div class="p-3 border-bottom position-relative cart-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1 me-3">
+                                <p class="mb-1 fw-medium">${item.nombre}</p>
+                                <div class="d-flex align-items-center small">
+                                    <span class="text-muted">$${item.precio.toLocaleString()} × ${item.cantidad}</span>
+                                    <span class="mx-2 text-muted">|</span>
+                                    <span class="text-primary fw-medium">$${(item.precio * item.cantidad).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad - 1})" 
+                                            class="btn btn-outline-secondary">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <span class="btn btn-outline-secondary disabled">
+                                        ${item.cantidad}
+                                    </span>
+                                    <button type="button" onclick="window.actualizarCantidad('${item.id}', ${item.cantidad + 1})"
+                                            class="btn btn-outline-secondary">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                                <button type="button" onclick="window.eliminarDelCarrito('${item.id}')"
+                                        class="btn btn-outline-danger btn-sm delete-btn">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                            <span class="tw-text-sm tw-font-medium tw-text-gray-900 tw-w-20 tw-text-right">
-                                $${(item.precio * item.cantidad).toLocaleString()}
-                            </span>
-                            <button type="button" onclick="window.eliminarDelCarrito('${item.id}')" class="tw-text-red-500 hover:tw-text-red-700 tw-transition-colors">
-                                <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
                 `).join('');
 
                 // Actualizar totales
-                const subtotal = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-                const descuento = 0;
+                let subtotal = 0;
+                items.forEach(item => {
+                    subtotal += item.precio * item.cantidad;
+                });
+                
                 const impuestos = subtotal * 0.19;
-                const total = subtotal + impuestos - descuento;
-
+                const total = subtotal + impuestos;
+                
                 document.getElementById('subtotal').textContent = `$${subtotal.toLocaleString()}`;
-                document.getElementById('descuento').textContent = `$${descuento.toLocaleString()}`;
                 document.getElementById('impuestos').textContent = `$${impuestos.toLocaleString()}`;
                 document.getElementById('total').textContent = `$${total.toLocaleString()}`;
             };
-            
-            window.actualizarCantidad = function(id, cantidad) {
-                cantidad = parseInt(cantidad);
-                if (cantidad < 1) return;
+
+            window.actualizarCantidad = function(id, nuevaCantidad) {
+                if (nuevaCantidad < 1) {
+                    window.eliminarDelCarrito(id);
+                    return;
+                }
                 
-                const item = window.carrito.get(id.toString());
+                const item = window.carrito.get(id);
                 if (item) {
-                    item.cantidad = cantidad;
-                    window.carrito.set(id.toString(), item);
+                    item.cantidad = nuevaCantidad;
                     window.actualizarCarrito();
                 }
             };
-            
+
             window.eliminarDelCarrito = function(id) {
-                window.carrito.delete(id.toString());
-                window.actualizarCarrito();
-                mostrarNotificacion('Producto eliminado del carrito');
-            };
-            
-            window.limpiarFormulario = function() {
-                window.carrito.clear();
-                window.actualizarCarrito();
-                document.getElementById('clienteSelect').value = '';
-                document.getElementById('tipoPedido').value = 'Local';
-                document.getElementById('notas').value = '';
+                const item = window.carrito.get(id);
+                if (item) {
+                    window.carrito.delete(id);
+                    window.actualizarCarrito();
+                    mostrarNotificacion(`${item.nombre} eliminado del carrito`);
+                }
             };
 
-            // Inicializar la interfaz
+            window.limpiarFormulario = function() {
+                window.carrito.clear();
+                document.getElementById('clienteSelect').value = '0'; // Establecer "Venta al Contado" como valor por defecto
+                document.getElementById('tipoPedido').value = 'Local';
+                document.getElementById('notas').value = '';
+                window.actualizarCarrito();
+            };
+
+            // Inicializar el carrito
             window.actualizarCarrito();
+            
+            // Activar el botón "Todos" por defecto
+            const btnTodos = document.querySelector('.categoria-badge[data-categoria="todos"]');
+            if (btnTodos) {
+                btnTodos.classList.remove('tw-bg-white', 'tw-text-gray-700');
+                btnTodos.classList.add('tw-bg-blue-600', 'tw-text-white');
+            }
+
+            // Agregar estilos para el botón de eliminar
+            const style = document.createElement('style');
+            style.textContent = `
+                .cart-item .delete-btn {
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+                .cart-item:hover .delete-btn {
+                    opacity: 1;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Función para validar RUT chileno
+            function validarRut(rut) {
+                // Limpiar el RUT de puntos y guión
+                rut = rut.replace(/\./g, '').replace(/-/g, '');
+                
+                // Obtener dígito verificador
+                const dv = rut.slice(-1).toUpperCase();
+                const rutNumero = parseInt(rut.slice(0, -1));
+                
+                // Calcular dígito verificador esperado
+                let suma = 0;
+                let multiplicador = 2;
+                let rutReverso = rutNumero.toString().split('').reverse();
+                
+                for(let i = 0; i < rutReverso.length; i++) {
+                    suma += parseInt(rutReverso[i]) * multiplicador;
+                    multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+                }
+                
+                const dvEsperado = 11 - (suma % 11);
+                const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+                
+                return dvCalculado === dv;
+            }
+
+            // Manejar el guardado del nuevo cliente
+            document.getElementById('btnGuardarCliente').addEventListener('click', async function() {
+                const form = document.getElementById('formNuevoCliente');
+                
+                // Validar el formulario
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const rut = document.getElementById('rutCliente').value;
+                if (!validarRut(rut)) {
+                    mostrarNotificacionError('RUT inválido');
+                    return;
+                }
+
+                // Obtener los valores de los campos
+                const nombre = document.getElementById('nombreCliente').value.trim();
+                const apellidos = document.getElementById('apellidosCliente').value.trim();
+                const email = document.getElementById('emailCliente').value.trim();
+                const telefono = document.getElementById('telefonoCliente').value.trim();
+
+                // Validar campos requeridos
+                if (!rut || !nombre || !apellidos) {
+                    mostrarNotificacionError('Los campos RUT, Nombre y Apellidos son obligatorios');
+                    return;
+                }
+
+                const clienteData = {
+                    RutCliente: rut,
+                    Nombre: nombre,
+                    Apellidos: apellidos,
+                    Email: email || null, // Si está vacío, enviar null
+                    Telefono: telefono || null // Si está vacío, enviar null
+                };
+
+                try {
+                    const notificacionProcesando = mostrarNotificacionProcesando('Guardando cliente...');
+                    const btnGuardar = document.getElementById('btnGuardarCliente');
+                    btnGuardar.disabled = true;
+                    btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+
+                    const response = await fetch('/Ventas/CrearCliente', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(clienteData)
+                    });
+
+                    const result = await response.json();
+                    cerrarNotificacion(notificacionProcesando);
+
+                    if (result.success) {
+                        // Agregar el nuevo cliente al select
+                        const select = document.getElementById('clienteSelect');
+                        const option = new Option(`${clienteData.Nombre} ${clienteData.Apellidos}`, result.clienteId);
+                        select.add(option);
+                        select.value = result.clienteId;
+
+                        // Cerrar el modal y limpiar el formulario
+                        bootstrap.Modal.getInstance(document.getElementById('agregarClienteModal')).hide();
+                        form.reset();
+
+                        mostrarNotificacion('Cliente agregado exitosamente');
+                    } else {
+                        throw new Error(result.message || 'Error al crear el cliente');
+                    }
+                } catch (error) {
+                    mostrarNotificacionError(error.message);
+                } finally {
+                    const btnGuardar = document.getElementById('btnGuardarCliente');
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = 'Guardar Cliente';
+                }
+            });
+
+            // Limpiar el formulario cuando se cierre el modal
+            document.getElementById('agregarClienteModal').addEventListener('hidden.bs.modal', function () {
+                document.getElementById('formNuevoCliente').reset();
+            });
         });
     </script>
 } 
