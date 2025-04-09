@@ -109,6 +109,7 @@
                         <tr>
                             <th>ID Venta</th>
                             <th>Cliente</th>
+                            <th>Usuario/Empresa</th>
                             <th>Fecha</th>
                             <th>Total</th>
                             <th>Estado</th>
@@ -121,6 +122,15 @@
                         <tr>
                                 <td>@venta.VentaID</td>
                                 <td>@(venta.Cliente?.Nombre ?? "Cliente General")</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">@(venta.Usuario?.Nombre ?? "Usuario no disponible")</span>
+                                        <span class="text-primary">
+                                            <i class="bi bi-building"></i>
+                                            @(venta.Empresa?.NombreEmpresa ?? "Empresa no disponible")
+                                        </span>
+                                    </div>
+                                </td>
                                 <td>@venta.FechaVenta.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>$@venta.Total.ToString("N0")</td>
                                 <td>

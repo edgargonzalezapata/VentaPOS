@@ -482,8 +482,18 @@ namespace VentaPOS.Controllers
 
         public async Task<IActionResult> ListaVentas()
         {
+            // Obtener el RUT de la empresa del usuario logueado
+            var empresaRut = HttpContext.Session.GetString("EmpresaRut");
+            if (string.IsNullOrEmpty(empresaRut))
+            {
+                return RedirectToAction("Login", "Usuarios");
+            }
+
             var ventas = await _context.Ventas
                 .Include(v => v.Cliente)
+                .Include(v => v.Usuario)
+                .Include(v => v.Empresa)
+                .Where(v => v.EmpresaRut == empresaRut) // Filtrar por empresa
                 .OrderByDescending(v => v.FechaVenta)
                 .ToListAsync();
 

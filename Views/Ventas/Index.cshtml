@@ -69,17 +69,18 @@
     }
 
     .categoria-badge {
-        transition: all 0.2s ease;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
     }
 
     .categoria-badge:hover {
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .categoria-badge.active {
-        background-color: #2563eb;
-        color: white;
-        border-color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .search-wrapper {
@@ -134,6 +135,66 @@
         align-items: center;
         gap: 0.5rem;
     }
+
+    .btn-outline-brown {
+        color: #795548;
+        border-color: #795548;
+    }
+    .btn-outline-brown:hover, .btn-outline-brown.active {
+        color: white;
+        background-color: #795548;
+        border-color: #795548;
+    }
+    
+    .btn-outline-pink {
+        color: #e91e63;
+        border-color: #e91e63;
+    }
+    .btn-outline-pink:hover, .btn-outline-pink.active {
+        color: white;
+        background-color: #e91e63;
+        border-color: #e91e63;
+    }
+    
+    .btn-outline-yellow {
+        color: #ffc107;
+        border-color: #ffc107;
+    }
+    .btn-outline-yellow:hover, .btn-outline-yellow.active {
+        color: white;
+        background-color: #ffc107;
+        border-color: #ffc107;
+    }
+    
+    .btn-outline-orange {
+        color: #ff5722;
+        border-color: #ff5722;
+    }
+    .btn-outline-orange:hover, .btn-outline-orange.active {
+        color: white;
+        background-color: #ff5722;
+        border-color: #ff5722;
+    }
+    
+    .btn-outline-green {
+        color: #4caf50;
+        border-color: #4caf50;
+    }
+    .btn-outline-green:hover, .btn-outline-green.active {
+        color: white;
+        background-color: #4caf50;
+        border-color: #4caf50;
+    }
+    
+    .btn-outline-blue {
+        color: #2196f3;
+        border-color: #2196f3;
+    }
+    .btn-outline-blue:hover, .btn-outline-blue.active {
+        color: white;
+        background-color: #2196f3;
+        border-color: #2196f3;
+    }
 </style>
 
 <div class="d-flex h-100 overflow-hidden flex-column flex-md-row">
@@ -179,10 +240,22 @@
                             <i class="bi bi-grid me-2"></i>
                             Todos
                         </button>
+                        @{
+                            var coloresCategorias = new Dictionary<string, string>
+                            {
+                                { "Café y Bebidas Calientes", "btn-outline-brown" },
+                                { "Pastelería", "btn-outline-pink" },
+                                { "Sándwiches", "btn-outline-yellow" },
+                                { "Pollos a la Brasa", "btn-outline-orange" },
+                                { "Acompañamientos", "btn-outline-green" },
+                                { "Bebidas Frías", "btn-outline-blue" }
+                            };
+                        }
                         @foreach (var categoria in Model.Productos.Select(p => p.Categoria?.Nombre).Distinct().Where(c => c != null))
                         {
+                            var colorClase = coloresCategorias.ContainsKey(categoria) ? coloresCategorias[categoria] : "btn-outline-secondary";
                             <button type="button" 
-                                    class="btn btn-outline-primary categoria-badge"
+                                    class="btn @colorClase categoria-badge"
                                     data-categoria="@categoria">
                                 <i class="bi bi-tag me-2"></i>
                                 @categoria

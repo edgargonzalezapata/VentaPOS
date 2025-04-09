@@ -17,7 +17,24 @@
             <div class="tw-flex tw-flex-col">
                 <!-- Logo/Título -->
                 <div class="tw-p-4 tw-border-b tw-border-gray-200">
-                    <h2 class="tw-text-xl tw-font-bold tw-text-gray-800">@(Context.Session.GetString("UserName") ?? "Usuario")</h2>
+                    @inject VentaPOS.Data.VentaPosContext DbContext
+                    @{
+                        var rolUsuario = Context.Session.GetString("RolUsuario");
+                        var empresaRut = Context.Session.GetString("EmpresaRut");
+                        var nombreUsuario = Context.Session.GetString("UserName");
+                        
+                        var empresa = DbContext.Empresas.FirstOrDefault(e => e.Rut == empresaRut);
+                        var razonSocial = empresa?.NombreEmpresa ?? "Mi Empresa";
+                    }
+                    <h1 class="tw-text-2xl tw-font-bold tw-text-gray-800">@razonSocial</h1>
+                    @if (rolUsuario == "Empresa")
+                    {
+                        <p class="tw-text-sm tw-text-gray-600">Administrador</p>
+                    }
+                    else
+                    {
+                        <h2 class="tw-text-lg tw-font-medium tw-text-gray-700">@(nombreUsuario ?? "Usuario")</h2>
+                    }
                     <p class="tw-text-sm tw-text-gray-600">Panel de Control</p>
                 </div>
 

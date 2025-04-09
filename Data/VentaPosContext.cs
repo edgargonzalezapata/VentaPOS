@@ -258,8 +258,6 @@ public partial class VentaPosContext : DbContext
         {
             entity.HasKey(e => e.RolId).HasName("PK__Roles__F92302D15CC78A2C");
 
-            entity.HasIndex(e => e.Nombre, "UQ__Roles__75E3EFCF93AC4567").IsUnique();
-
             entity.Property(e => e.RolId).HasColumnName("RolID");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(200)
@@ -267,6 +265,10 @@ public partial class VentaPosContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
+            entity.HasIndex(e => new { e.Nombre, e.EmpresaRut })
+                .HasDatabaseName("UQ__Roles__NombreEmpresa")
+                .IsUnique();
 
             entity.HasOne(d => d.Empresa).WithMany()
                 .HasForeignKey(d => d.EmpresaRut)

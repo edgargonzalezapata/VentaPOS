@@ -144,13 +144,32 @@ namespace VentaPOS.Controllers
                     var rolesPrederminados = new[] { "Administrador", "Cajero", "Atendedor" };
                     foreach (var rolNombre in rolesPrederminados)
                     {
-                        var nuevoRol = new Roles
+                        // Buscar primero si existe el rol para cualquier empresa
+                        var rolExistente = await _context.Roles
+                            .FirstOrDefaultAsync(r => r.Nombre == rolNombre);
+                            
+                        if (rolExistente != null)
                         {
-                            Nombre = rolNombre,
-                            Descripcion = $"Rol de {rolNombre}",
-                            EmpresaRut = empresa.Rut
-                        };
-                        _context.Roles.Add(nuevoRol);
+                            // Si el rol existe, crear una copia para esta empresa
+                            var nuevoRol = new Roles
+                            {
+                                Nombre = rolNombre,
+                                Descripcion = rolExistente.Descripcion ?? $"Rol de {rolNombre}",
+                                EmpresaRut = empresa.Rut
+                            };
+                            _context.Roles.Add(nuevoRol);
+                        }
+                        else
+                        {
+                            // Si no existe, crear uno nuevo
+                            var nuevoRol = new Roles
+                            {
+                                Nombre = rolNombre,
+                                Descripcion = $"Rol de {rolNombre}",
+                                EmpresaRut = empresa.Rut
+                            };
+                            _context.Roles.Add(nuevoRol);
+                        }
                     }
                     await _context.SaveChangesAsync();
 

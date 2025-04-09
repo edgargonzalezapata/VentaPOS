@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VentaPOS.Data;
 
@@ -11,9 +12,11 @@ using VentaPOS.Data;
 namespace VentaPOS.Migrations
 {
     [DbContext(typeof(VentaPosContext))]
-    partial class VentaPosContextModelSnapshot : ModelSnapshot
+    [Migration("20250409153246_CrearIndiceCompuestoRoles")]
+    partial class CrearIndiceCompuestoRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
